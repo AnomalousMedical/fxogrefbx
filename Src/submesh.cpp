@@ -392,7 +392,7 @@ namespace FxOgreFBX
                 offset += Ogre::VertexElement::getTypeSize(uvType);
             }
             Ogre::VertexDeclaration* pOptimalDecl = pDecl->getAutoOrganisedDeclaration(
-                params.exportVBA,params.exportBlendShapes || params.exportVertAnims,params.exportBlendShapes || params.exportVertAnims);
+                params.exportVBA, params.exportBlendShapes || params.exportVertAnims, false);
             // Fill the vertex buffer using the newly created vertex declaration
             stat = createOgreVertexBuffer(pSubmesh,pDecl,m_vertices);
             // Write vertex bone assignements list

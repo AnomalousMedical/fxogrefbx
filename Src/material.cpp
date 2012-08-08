@@ -269,8 +269,16 @@ namespace FxOgreFBX
         if (m_lightingOff)
             params.outMaterial << "\t\t\tlighting off\n\n";
         //set phong shading if requested (default is gouraud)
-        if (m_type == MT_PHONG)
-            params.outMaterial << "\t\t\tshading phong\n";
+        // jcr 2012/07/08 disable this phong shading directive because Direct3D9
+        //                (what FaceFX Studio uses in D3D mode) does not support
+        //                phong, and no card supports phong in fixed function mode.
+        //                it's likely that the FBX sdk is incorrectly classifying all
+        //                materials as phong in Material::load(). in any case, commenting
+        //                out this simply leaves everything as the default shading model
+        //                that should work everywhere. we may want to revisit this at some
+        //                point.
+        //if (m_type == MT_PHONG)
+        //    params.outMaterial << "\t\t\tshading phong\n";
         //ambient colour
         // Format: ambient (<red> <green> <blue> [<alpha>]| vertexcolour)
         params.outMaterial << "\t\t\tambient " << m_ambient.w << " " << m_ambient.x << " " << m_ambient.y
