@@ -265,15 +265,23 @@ namespace FxOgreFBX
             if( pCurve )
             {
                 int numKeys = pCurve->KeyGetCount();
-                float first = (float)pCurve->KeyGet(0).GetTime().GetSecondDouble();
-                float last = (float)pCurve->KeyGet(numKeys-1).GetTime().GetSecondDouble();
-                if( first < start )
+                if( numKeys > 0 )
                 {
-                    start = first;
-                }
-                if( last > stop )
-                {
-                    stop = last;
+                    float first = (float)pCurve->KeyGet(0).GetTime().GetSecondDouble();
+                    float last = first;
+
+                    if( numKeys > 1 )
+                    {
+                        last = (float)pCurve->KeyGet(numKeys-1).GetTime().GetSecondDouble();
+                    }
+                    if( first < start )
+                    {
+                        start = first;
+                    }
+                    if( last > stop )
+                    {
+                        stop = last;
+                    }
                 }
             }
         }
@@ -422,8 +430,6 @@ namespace FxOgreFBX
 
         m_params.setOutputFilePaths(m_params.meshFilename);
 
-        // Create output files
-        m_params.openFiles();
         // Create a new empty mesh
         m_pMesh = new Mesh();
 
@@ -509,7 +515,7 @@ namespace FxOgreFBX
         m_params.closeFiles();
         FxOgreFBXLog("Completed OgreExporter::exportScene...\n");
         
-        return true;
+        return stat;
     }
 
     bool OgreExporter::prepareFrame0Anim(const char* clipName)
@@ -854,6 +860,8 @@ namespace FxOgreFBX
         // Write materials data
         if (m_params.exportMaterial)
         {
+            m_params.openFiles();
+
             FxOgreFBXLog("Writing materials data...\n");
             
             stat  = m_pMaterialSet->writeOgreScript(m_params);

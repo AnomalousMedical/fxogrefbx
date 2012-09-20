@@ -312,13 +312,12 @@ namespace FxOgreFBX
                                        CREATE_ALWAYS,
                                        FILE_ATTRIBUTE_NORMAL,
                                        NULL);
-
+            CloseHandle(hFile);
             if( INVALID_HANDLE_VALUE != hFile )
             {
                 hasWritePermissions = true;
+                DeleteFileA(s.c_str());
             }
-
-            CloseHandle(hFile);
         }
 
         return hasWritePermissions;

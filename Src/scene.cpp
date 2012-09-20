@@ -2,7 +2,7 @@
 // scene.cpp
 // Author     : Doug Perkowski
 // Start Date : March 27th, 2008
-// Copyright  : Copyright (c) 2002-2011 OC3 Entertainment, Inc.
+// Copyright  : Copyright (c) 2002-2012 OC3 Entertainment, Inc.
 ////////////////////////////////////////////////////////////////////////////////
 /*********************************************************************************
 *                                                                                *

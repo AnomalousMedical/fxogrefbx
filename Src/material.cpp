@@ -68,7 +68,10 @@ namespace FxOgreFBX
     // Load material data
     bool Material::load(FbxSurfaceMaterial* pGameMaterial,std::vector<int>& uvsets,ParamList& params)
     {
-
+        if( !pGameMaterial )
+        {
+            return false;
+        }
         clear();
         
         //read material name, adding the requested prefix
@@ -91,59 +94,62 @@ namespace FxOgreFBX
         //check if we want to export with lighting off option
         m_lightingOff = params.lightingOff;
 
-        FbxPropertyT<FbxDouble3> lFbxDouble3;
-        FbxPropertyT<FbxDouble> lFbxDouble;
-
-        if (pGameMaterial->GetClassId().Is(FbxSurfacePhong::ClassId))
+        if( pGameMaterial->GetClassId().Is(FbxSurfacePhong::ClassId) || pGameMaterial->GetClassId().Is(FbxSurfaceLambert::ClassId) )
         {
-            m_type = MT_PHONG;
+            FbxPropertyT<FbxDouble3> lFbxDouble3;
+            FbxPropertyT<FbxDouble> lFbxDouble;
 
-            // Specular Color (unique to Phong materials)
-            lFbxDouble = ((FbxSurfacePhong *) pGameMaterial)->SpecularFactor;
-            lFbxDouble3 =((FbxSurfacePhong *) pGameMaterial)->Specular;
+            if (pGameMaterial->GetClassId().Is(FbxSurfacePhong::ClassId))
+            {
+                m_type = MT_PHONG;
 
-            // @todo - this technique doesn't always give correct values. Figure out how to set m_specular correctly.
-            //m_specular = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), 
-            //  static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), 
-            //  static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
+                // Specular Color (unique to Phong materials)
+                lFbxDouble = ((FbxSurfacePhong *) pGameMaterial)->SpecularFactor;
+                lFbxDouble3 =((FbxSurfacePhong *) pGameMaterial)->Specular;
 
-            // Display the Shininess
-            //lFbxDouble =((FbxSurfacePhong *) pGameMaterial)->Shininess;
-            //float shininess = static_cast<float>(lFbxDouble.Get());
+                // @todo - this technique doesn't always give correct values. Figure out how to set m_specular correctly.
+                //m_specular = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), 
+                //  static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), 
+                //  static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
 
-            // Display the Reflectivity
-            //lFbxDouble =((FbxSurfacePhong *) pGameMaterial)->ReflectionFactor;
-            //float reflectivity =  static_cast<float>(lFbxDouble.Get());
+                // Display the Shininess
+                //lFbxDouble =((FbxSurfacePhong *) pGameMaterial)->Shininess;
+                //float shininess = static_cast<float>(lFbxDouble.Get());
 
-        }
+                // Display the Reflectivity
+                //lFbxDouble =((FbxSurfacePhong *) pGameMaterial)->ReflectionFactor;
+                //float reflectivity =  static_cast<float>(lFbxDouble.Get());
 
-        lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->AmbientFactor;
-        lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Ambient;
-        m_ambient = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), 
-            static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), 
-            static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
+            }
 
-        lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->DiffuseFactor;
-        lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Diffuse;
-        m_diffuse = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
+            lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->AmbientFactor;
+            lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Ambient;
+            m_ambient = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), 
+                static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), 
+                static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
 
-        lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->EmissiveFactor;
-        lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Emissive;
-        m_emissive = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), 
-            static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), 
-            static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
+            lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->DiffuseFactor;
+            lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Diffuse;
+            m_diffuse = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
 
-        //Opacity is Transparency factor now
-        lFbxDouble =((FbxSurfaceLambert *) pGameMaterial)->TransparencyFactor;
-        lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->TransparentColor;
+            lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->EmissiveFactor;
+            lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Emissive;
+            m_emissive = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), 
+                static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), 
+                static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
+
+            //Opacity is Transparency factor now
+            lFbxDouble =((FbxSurfaceLambert *) pGameMaterial)->TransparencyFactor;
+            lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->TransparentColor;
 
 
-        // @todo - This code won't mark textures as transparent incorrectly, but some
-        // transparent  materials aren't exported as such.  The TransparencyFactor alone
-        // is not reliable, and neither are the Max FBX exporters for that matter.
-        if( lFbxDouble3.Get()[0] * lFbxDouble.Get() >= PRECISION )
-        {
-            m_isTransparent = true;
+            // @todo - This code won't mark textures as transparent incorrectly, but some
+            // transparent  materials aren't exported as such.  The TransparencyFactor alone
+            // is not reliable, and neither are the Max FBX exporters for that matter.
+            if( lFbxDouble3.Get()[0] * lFbxDouble.Get() >= PRECISION )
+            {
+                m_isTransparent = true;
+            }
         }
 
         // support multiple properties?

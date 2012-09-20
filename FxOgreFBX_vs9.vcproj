@@ -168,6 +168,8 @@
 			/>
 			<Tool
 				Name="VCPostBuildEventTool"
+				Description="Copying to Studio directory..."
+				CommandLine="copy &quot;$(TargetPath)&quot; &quot;$(SolutionDir)..\..\Studio\&quot;"
 			/>
 		</Configuration>
 		<Configuration
