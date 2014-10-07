@@ -2,7 +2,7 @@
 // scene.h
 // Author     : Doug Perkowski
 // Start Date : March 27th, 2008
-// Copyright  : Copyright (c) 2002-2012 OC3 Entertainment, Inc.
+// Copyright  : Copyright (c) 2002-2014 OC3 Entertainment, Inc.
 ////////////////////////////////////////////////////////////////////////////////
 /*********************************************************************************
 *                                                                                *
@@ -17,7 +17,7 @@
 
 
 #include "paramList.h"
-#include "tinyxml.h"
+#include "tinyxml2.h"
 
 namespace FxOgreFBX
 {
@@ -131,17 +131,18 @@ namespace FxOgreFBX
         void addLight(FxOgreLight& light);
         void addMesh(FxOgreMesh& node);
         void setSceneTransform(const FxOgreTransform& trans);
+        FxOgreTransform getDefaultTransForm( );
         void addCamera(FxOgreCamera& camera);
-        int getNumMeshes() {return m_meshes.size();}
+        int getNumMeshes() {return static_cast<int>(m_meshes.size());}
         void clearMeshes() {m_meshes.clear();}
     protected:
-        FxOgreTransform getDefaultTransForm( );
+       
         FxOgreTransform m_scene_trans;
         std::vector<FxOgreLight> m_lights;
         std::vector<FxOgreCamera> m_cameras;
         std::vector<FxOgreMesh> m_meshes;
         int id_counter;
-        TiXmlElement* writeNodeData(TiXmlElement* parent, const FxOgreNode &node);
+        tinyxml2::XMLElement* writeNodeData(tinyxml2::XMLDocument& xmlDoc, tinyxml2::XMLElement* parent, const FxOgreNode &node);
         std::string getLightTypeString(FxOgreLightType type);
 
     };

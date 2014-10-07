@@ -48,9 +48,9 @@ namespace FxOgreFBX
 
     void BlendShape::getKeyedFrames(std::vector<int>& keyedFrames )
     {
-        for( size_t i = 0; i < m_poseGroups.size(); ++i )
+        for( int i = 0; i < static_cast<int>(m_poseGroups.size()); ++i )
         {
-            for( size_t j = 0; j <  m_poseGroups[i].poses.size(); ++j )
+            for( int j = 0; j < static_cast<int>(m_poseGroups[i].poses.size()); ++j )
             {
                 AppendKeyedFrames(keyedFrames, m_poseGroups[i].poses[j].pCurve);
             }
@@ -76,10 +76,10 @@ namespace FxOgreFBX
 
         // Get the animstack for getting blendshape curve info.
         FbxAnimLayer* pAnimLayer = NULL;
-        FbxAnimStack* pAnimStack = FbxCast<FbxAnimStack>(params.pScene->GetSrcObject(FBX_TYPE(FbxAnimStack), 0));
+        FbxAnimStack* pAnimStack = params.pScene->GetSrcObject<FbxAnimStack>(0);
         if( pAnimStack)
         {
-            pAnimLayer = pAnimStack->GetMember(FBX_TYPE(FbxAnimLayer), 0);
+            pAnimLayer = (FbxAnimLayer*) pAnimStack->GetMember(FbxCriteria::ObjectType(FbxAnimLayer::ClassId), 0);
         }
 
         FxOgreFBXLog( "Exporting Blendshapes with bindmatrix:\n");
@@ -88,7 +88,6 @@ namespace FxOgreFBX
         FbxMesh *pMesh = m_pNode->GetMesh();
         if( pMesh )
         {
-            int ogreBlendShapeIndex = 0;
             int lBlendShapeDeformerCount = pMesh->GetDeformerCount(FbxDeformer::eBlendShape);
 
             for(int lBlendShapeIndex = 0; lBlendShapeIndex<lBlendShapeDeformerCount; ++lBlendShapeIndex)
@@ -122,72 +121,72 @@ namespace FxOgreFBX
                             // create a new pose
                             pose p;
                             p.poseTarget = m_target;
-                            p.index = targetIndex;
-                            p.blendShapeIndex = ogreBlendShapeIndex;
                             p.name = posename;
                             p.pShape = pShape;
 
                             p.pCurve = pMesh->GetShapeChannel(lBlendShapeIndex, lChannelIndex, pAnimLayer);
+                  
 
-                            ogreBlendShapeIndex++;
-                            
-                            
-                            size_t numPoints =  pMesh->GetControlPointsCount();
-                            std::vector<FbxVector4> vmPoints;
-                            vmPoints.reserve(numPoints);
-
-                            // Get original verts.
-                            for( size_t k = 0; k < numPoints; ++k )
-                            {
-                                vmPoints.push_back( pMesh->GetControlPointAt(k) );
-                            }
-                            
-                            // Replace with deformed verts.
+							FbxVector4* pMeshVerts = new FbxVector4[pMesh->GetControlPointsCount()];
+							FbxVector4* pMorphVerts = new FbxVector4[pMesh->GetControlPointsCount()];
+							memcpy(pMeshVerts, pMesh->GetControlPoints(), pMesh->GetControlPointsCount() * sizeof(FbxVector4));
+							memcpy(pMorphVerts, pMesh->GetControlPoints(), pMesh->GetControlPointsCount() * sizeof(FbxVector4));
+													
+							// Replace with deformed verts.
                             for( int k = 0; k < numIndices; ++k )
-                            {
-                                int index = pShape->GetControlPointIndices()[k];
-                                assert(index < (int)vmPoints.size() && index >= 0);
-                                vmPoints[index] =  pShape->GetControlPointAt(index);
-                            }
-                        
+	                        {
+		                        int index = pShape->GetControlPointIndices()[k];
+			                    assert(index < (int)pMesh->GetControlPointsCount() && index >= 0);
+				                pMorphVerts[index] =  pShape->GetControlPointAt(index);
+					        }
+							if( params.useanimframebind )
+							{
+								FbxTime pTime(params.bindframe);
+								FbxPose* pPose = NULL;
+
+								// If we bound the skeleton at a particular frame, we need to calculate the diffs from 
+								// that position. 
+								ComputeLinearDeformation(m_bindPose, m_pNode, pMesh, pTime, pMeshVerts, pPose);
+								ComputeLinearDeformation(m_bindPose, m_pNode, pMesh, pTime, pMorphVerts, pPose);
+							}
+							BoundingBox morphBoundingBox;
                             
-                            BoundingBox morphBoundingBox;
-                            
-                            // calculate vertex offsets
-                            for (int k=0; k<numVertices; k++)
-                            {
-                                vertexOffset vo;
-                                assert ((offset+k)< (int)vertices.size());
+							// calculate vertex offsets
+							for (int k=0; k<numVertices; k++)
+							{
+								vertexOffset vo;
+								assert ((offset+k)< (int)vertices.size());
 
-                                vertex v = vertices[offset+k];
-                                assert(v.index < numMorphVertices);
-                                assert(v.index < pMesh->GetControlPointsCount());
+								vertex v = vertices[offset+k];
+								assert(v.index < numMorphVertices);
+								assert(v.index < pMesh->GetControlPointsCount());
 
-                                FbxVector4 meshVert = m_bindPose.MultT( pMesh->GetControlPointAt(v.index) );
 
-                                int morphindex = pShape->GetControlPointIndices()[v.index];
-                                FbxVector4 morphVert = m_bindPose.MultT( vmPoints[v.index] );
+								FbxVector4 meshVert = m_bindPose.MultT(pMeshVerts[v.index]);
+								FbxVector4 morphVert = m_bindPose.MultT(pMorphVerts[v.index]) ;
+								FbxVector4 diff = morphVert - meshVert;
 
-                                FbxVector4 diff = morphVert - meshVert;
+								// Add this point to the bounding box
+								morphBoundingBox.merge(Point3(morphVert[0], morphVert[1], morphVert[2]));
 
-                                // Add this point to the bounding box
-                                morphBoundingBox.merge(Point3(morphVert[0], morphVert[1], morphVert[2]));
+								vo.x = static_cast<float>(diff[0] * params.lum);
+								vo.y = static_cast<float>(diff[1] * params.lum);
+								vo.z = static_cast<float>(diff[2] * params.lum);	
 
-                                vo.x = static_cast<float>(diff[0] * params.lum);
-                                vo.y = static_cast<float>(diff[1] * params.lum);
-                                vo.z = static_cast<float>(diff[2] * params.lum);	
-
-                                vo.index = offset+k;
-                                if (fabs(vo.x) < PRECISION)
-                                    vo.x = 0;
-                                if (fabs(vo.y) < PRECISION)
-                                    vo.y = 0;
-                                if (fabs(vo.z) < PRECISION)
-                                    vo.z = 0;
-                                if ((vo.x!=0) || (vo.y!=0) || (vo.z!=0))
-                                    p.offsets.push_back(vo);
-                            }
-
+								vo.index = offset+k;
+								if (fabs(vo.x) < PRECISION)
+									vo.x = 0;
+								if (fabs(vo.y) < PRECISION)
+									vo.y = 0;
+								if (fabs(vo.z) < PRECISION)
+									vo.z = 0;
+								if ((vo.x!=0) || (vo.y!=0) || (vo.z!=0))
+									p.offsets.push_back(vo);
+							}
+							delete[] pMeshVerts;
+							pMeshVerts = NULL;
+							delete[] pMorphVerts;
+							pMorphVerts = NULL;
                             // Unfortunately we can't prune zero vertex shapes without
                             // requiring full geometry animation files.  (Calling this 
                             // function with numVertices=0 should still set up pg.poses).
@@ -270,7 +269,7 @@ namespace FxOgreFBX
         FbxMesh *pMesh = m_pNode->GetMesh();
         if( pMesh )
         {        
-            for (size_t j=0; j<pg.poses.size(); j++)
+            for (int j=0; j<static_cast<int>(pg.poses.size()); j++)
             {
                 pose& p = pg.poses[j];
                 if( p.pCurve )

@@ -16,7 +16,7 @@
 #include "ogreExporter.h"
 #include "FBXSDKCommon.h"
 #include <algorithm>
-
+#include <limits>
 
 namespace FxOgreFBX
 {
@@ -31,8 +31,8 @@ namespace FxOgreFBX
         DestroySdkObjects(m_params.pSdkManager, m_params.pScene);
     }
 
-    bool OgreExporter::Initialize(const char* fbxfilename, const char* skeletonfilename,  const char* meshfilename, const char *logfilename, const char *animname)
-    {
+	bool OgreExporter::InitializeLogging(const char *logfilename)
+	{
         // Setup the log.
         if( logfilename )
         {
@@ -61,10 +61,18 @@ namespace FxOgreFBX
             {
                 FxOgreFBXLogFile::SetPath(logfilename);
             }
-
-            
             FxOgreFBXLog("logfilename: %s\n", logfilename);
+			return true;
         }
+		return false;
+	}
+    bool OgreExporter::Initialize(const char* fbxfilename, const char* skeletonfilename,  const char* meshfilename, const char *logfilename, const char *animname)
+    {
+		// Initialize the logging (does not clear the log).
+		if( !InitializeLogging(logfilename) )
+		{
+			return false;
+		}
 
         // Setup Skeleton and Mesh files.
         m_meshfilepath = "";
@@ -228,6 +236,13 @@ namespace FxOgreFBX
         // to know the exact start & end time...they just pass in a wide range and the
         // bounds are set appropriately.
         start = max(start, fbx_start);
+
+        // Negative time keys don't make sense to Ogre.  We don't support them here, but warn if we find them.
+        if( start < 0.0f )
+        {
+            FxOgreFBXLog( "Warning! Negative time keys are not supported.  Negative keys being ignored.\n", start, stop );
+            start = 0.0f;
+        }
         stop = min(stop, fbx_stop);
 
         if( stop < start )
@@ -323,14 +338,18 @@ namespace FxOgreFBX
         Skeleton* pSkeleton = NULL;
         Mesh* pMesh = NULL;
         pSkeleton = new Skeleton();
+
+        // initialize skeletonAddResult to true so that if the skeleton file doesn't exist, we do not fail.
+        bool skeletonAddResult = true;
+        bool morphAddResult = true;
         if( m_skeletonfilepath.length() > 0 )
         {
-            pSkeleton->AddFBXAnimationToExisting(managers, m_skeletonfilepath, m_animationname, m_params, start_sec, stop_sec);
+            skeletonAddResult = pSkeleton->AddFBXAnimationToExisting(managers, m_skeletonfilepath, m_animationname, m_params, start_sec, stop_sec);
         }        
         pMesh = new Mesh();
         if( m_meshfilepath.length() > 0 )
         {
-            pMesh->AddFBXAnimationToExisting(managers, m_meshfilepath, m_animationname, m_params, start_sec, stop_sec);
+            morphAddResult = pMesh->AddFBXAnimationToExisting(managers, m_meshfilepath, m_animationname, m_params, start_sec, stop_sec);
         } 
 
         printAnimInfo(m_animationname, m_params.fps, start_sec, pMesh, pSkeleton );
@@ -338,18 +357,20 @@ namespace FxOgreFBX
         delete pSkeleton;
         delete pMesh;
         
-        return true;
+        return (morphAddResult && skeletonAddResult);
     }
 
     bool OgreExporter::exportScene(const char* fbxfilename, const char* outputmeshfilename, const char* logfilename, const char* animname,const char* frame0name,  bool copyUniqueTextures, int bindframe)
     {
+		// Clear the log before a full scene export.  We need to initialize the logging
+		// before deleting the log.  We'll call InitializeLogging inside of Initialize 
+		// so the information logged there will be preserved. .
+		InitializeLogging(logfilename);
+		FxOgreFBXLogFile::ClearLog();
+
         if(!Initialize(fbxfilename, NULL, NULL, logfilename, animname))
         {
             return false;
-        }
-        if( logfilename )
-        {
-            FxOgreFBXLogFile::ClearLog();
         }
 
         std::string copyTex = "false";
@@ -439,7 +460,11 @@ namespace FxOgreFBX
         if (m_params.exportVBA || m_params.exportSkeleton)
         {
             m_pMesh->createSkeleton();
-            m_pMesh->getSkeleton()->load(m_params.pScene, m_params);
+            if( !m_pMesh->getSkeleton()->load(m_params.pScene, m_params) )
+			{
+				FxOgreFBXLog("Error! Skeleton could not be written!\n");
+				return false;
+			}
         }
         FbxNode* lRootNode = m_params.pScene->GetRootNode();
         if( lRootNode )
@@ -475,6 +500,19 @@ namespace FxOgreFBX
 
         if(m_params.exportScene && m_params.exportMesh)
         {
+
+            FxOgreTransform sceneTrans = m_FxOgreScene.getDefaultTransForm();
+            if( m_params.pScene )
+            {
+                if( m_params.pScene->GetGlobalSettings().GetAxisSystem() == FbxAxisSystem::eMax )
+                {
+                    // If this is a Z-up FBX file from Max, add a -90 degree rotation to the X-axis
+                    // so that the content will appear upright in the Ogre viewport.  
+                    sceneTrans.rot = FxOgrePoint4( 0.707f, -0.707f, 0.0f, 0.0f); 
+                    m_FxOgreScene.setSceneTransform(sceneTrans);
+                }
+            }
+
             FxOgreMesh meshNode;
 
             meshNode.node.trans.scale = FxOgrePoint3(1.0f, 1.0f, 1.0f);
@@ -482,23 +520,24 @@ namespace FxOgreFBX
             if(m_params.useSharedGeom )
             {
                 // See if we need to scale this mesh up because it is unusually small.
-                BoundingBox bbox = m_pMesh->calculateBoundingBox();
-                float bboxScale = static_cast<float>(std::abs(bbox.max.x + bbox.max.y + bbox.max.z - bbox.min.x -bbox.min.y -bbox.min.z));
-
-                if( bboxScale > 0 && bboxScale < 10 )
+                BoundingBox bbox = m_pMesh->calculateBoundingBox(m_params);
+                float bboxScale = static_cast<float>(bbox.getBiggestAxis());
+                if( bboxScale > 0.0f && bboxScale < 20.0f )
                 {
-                    FxOgreTransform trans;
-                    trans.pos = FxOgrePoint3(0.0f ,0.0f ,0.0f);
-                    trans.rot = FxOgrePoint4(1.0f, 0.0f ,0.0f ,0.0f);
-                    trans.scale =  FxOgrePoint3(10.0f / bboxScale, 10.0f / bboxScale, 10.0f / bboxScale);
-                    m_FxOgreScene.setSceneTransform(trans); 
+                    sceneTrans.scale =  FxOgrePoint3(20.0f / bboxScale, 20.0f / bboxScale, 20.0f / bboxScale);
                 }
+                else if( bboxScale > 1000.0f )
+                {
+                    sceneTrans.scale =  FxOgrePoint3(1000.0f / bboxScale, 1000.0f / bboxScale, 1000.0f / bboxScale );
+                }
+                FxOgreFBXLog( "Setting Scene scale: %f \n", (float)sceneTrans.scale.x);
+                m_FxOgreScene.setSceneTransform(sceneTrans);
             }
 
             meshNode.node.trans.rot = FxOgrePoint4(1.0f, 0.0f, 0.0f, 0.0f);
             std::string filename = StripToTopParent(m_params.meshFilename);
             meshNode.meshFile = filename.c_str();
-            int ri = filename.find_last_of(".");
+            //int ri = filename.find_last_of(".");
             meshNode.node.name = filename.substr(0,filename.length()-5);
             m_FxOgreScene.addMesh(meshNode);
         }
@@ -649,13 +688,24 @@ namespace FxOgreFBX
                         // Don't display hidden meshes.  
                         if( isVisible(pNode) )
                         {
+							  
                             FbxGeometryConverter lGeometryConverter(m_params.pSdkManager);
-                            for( int i = 0; i < pNode->GetNodeAttributeCount(); ++i )
+
+							//  Doug Perkowski 6/25/2014
+							// Instead of looping through the node attributes, we only use the default one.
+							// The samples work this way, and certain content was resulting in duplicate meshes
+							// where there were two eMesh node attributes.
+							if( pNode->GetNodeAttribute() )
                             {
-                                if( pNode->GetNodeAttributeByIndex(i)->GetAttributeType() == FbxNodeAttribute::eMesh )
+                                if( pNode->GetNodeAttribute()->GetAttributeType() == FbxNodeAttribute::eMesh )
                                 {
-                                    FbxMesh *pNonTriangulatedMesh = (FbxMesh*) pNode->GetNodeAttributeByIndex(i);
-                                    FbxMesh* pMesh = lGeometryConverter.TriangulateMesh(pNonTriangulatedMesh);
+                                    FbxMesh *pNonTriangulatedMesh = (FbxMesh*) pNode->GetNodeAttribute();
+                                    FbxMesh* pMesh = (FbxMesh*) lGeometryConverter.Triangulate(pNonTriangulatedMesh, false);
+                                    if(!pMesh)
+                                    {
+                                        FxOgreFBXLog("GeometryConverter.Triangulate() for mesh failed!\n");
+                                    }
+                                    assert(pMesh != NULL);
                                     stat = m_pMesh->load(pNode, pMesh, m_params);                           
                                 }
                             }
@@ -734,15 +784,27 @@ namespace FxOgreFBX
                     // Attenuation end as the range.
                     light.attenuation_range = static_cast<float>(pLight->FarAttenuationEnd.Get());
 
+                    // FBX default is for the range to be 0, but this has the effect of turning off the light in Ogre.
+                    if( light.attenuation_range < PRECISION )
+                    {
+                         light.attenuation_range = 100.0f;
+                    }
+
+                    light.attenuation_constant = 1.0f;
+
                     // Inverse decay
                     if(  pLight->DecayType.Get() == FbxLight::eLinear )
                     {
                         light.attenuation_linear = 1.0f;
                     }
                     // Inverse Square decay
-                    else if(  pLight->DecayType.Get() == FbxLight::eQuadratic)
+                    else if( pLight->DecayType.Get() == FbxLight::eQuadratic )
                     {
                         light.attenuation_quadratic = 1.0f;
+                    }
+                    else if( pLight->DecayType.Get() == FbxLight::eNone )
+                    {
+                        light.attenuation_range = std::numeric_limits<float>::max();
                     }
                 }
                 if(light.type == OGRE_LIGHT_SPOT)
@@ -751,12 +813,8 @@ namespace FxOgreFBX
                     light.range_falloff  = 0.0f;
                     light.range_outer = 1.0f;
                     
-                
-                    //propertyValue * PI / 180.0f;
-                    
                     light.range_outer = static_cast<float>(pLight->OuterAngle.Get()) * 3.1415926535f / 180.0f;
-                    // @todo - where did HotSpot go in the new FBX SDK?
-                    light.range_inner = static_cast<float>(pLight->OuterAngle.Get()) * 3.1415926535f / 180.0f;
+                    light.range_inner = static_cast<float>(pLight->InnerAngle.Get()) * 3.1415926535f / 180.0f;
 
                 }
                 m_FxOgreScene.addLight(light);
@@ -828,7 +886,7 @@ namespace FxOgreFBX
 
             if( m_pMesh->getNumSubmeshes() == 0 )
             {
-
+                FxOgreFBXLog( "ERRORBOXWARNING: No meshes could be exported from the FBX file.\n");
                 FxOgreFBXLog( "Error: No meshes exported.  Check the FBX file.\n");
                 return false;
             }

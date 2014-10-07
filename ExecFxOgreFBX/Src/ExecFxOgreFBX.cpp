@@ -36,14 +36,15 @@ Alternatively, call with the following options: \n\
  -o the path of the output .MESH file.  SKELETON, MATERIAL, & SCENE files are auto-generated.\n\
  -t flag to copy textures to mesh output directory.  Texture names are prepended with mesh name.\n\
  -z the name to use for the one-frame animation at frame zero.\n\
- -g if specified, the bind pose is taken from this frame. Otherwise the fbx bind pose is used (if there is only one).\n\
+ -g Specifies the frame to use as the bind pose (default is frame 0). \n\
+ -b if specified, the -g flag is ignored and the FBX bind pose is used. If there is not a consistent bind pose for all meshes, frame 0 is used as a fallback.  Note, bounding boxes are computed from the bind pose so this may create bounding boxes inconsistent with the animation. \n\
  -e the name to use for the animation from the entire FBX file.\n\n\n\
 \
  ANIMATION MODIFICATION - Modify existing .SKELETON and .MESH options:\n ----\n\
  -s the path of the existing skeleton file to add (bones) animations to. \n\
  -m the path of the existing mesh file to add (blendshape) animations to. If this file exists, a non-existing .SKELETON file will not fail the MORPH export.\n\
  -r the frame rate to use.  0 defaults to FBX file value.\n\
- -a the anim name, start frame, & end frame. Use a large end frame and a large (negative) start frame to default to FBX file bounds.\n\
+ -a the anim name, start frame, & end frame. Use a large end frame and zero for the start frame (negative time keys not supported) to default to FBX file bounds.\n\
  -d puts the EXE in delete mode.  The input FBX is ignored and the specified animation is deleted from the .SKELETON and .MESH files. (if it exists)\n\n\n\
  EXAMPLES\n ----\n\
  FxOgreFBX.exe \"C:\\Users\\me\\myfbx.fbx\"\n\
@@ -107,7 +108,7 @@ commandLineOptions parseArgs(int numArgs, char *argv[])
     opts.rate = 0;
     opts.copyUniqueTextures = false;
     opts.error = false;
-    opts.bindframe = INT_MAX;
+    opts.bindframe = 0;
     if( numArgs == 1 )
     {
         printUsage();
@@ -154,9 +155,9 @@ commandLineOptions parseArgs(int numArgs, char *argv[])
 
                     if( s2upper(ext) == ".FBX" )
                     {
-                        int animdeliminator = animfile.find_first_of('@');
+                        int animdeliminator = static_cast<int>(animfile.find_first_of('@'));
                         animClipInfo anim;
-                        int animNameLength = animfile.length() - animdeliminator - 5;
+                        size_t animNameLength = animfile.length() - animdeliminator - 5;
                         anim.name = animfile.substr(animdeliminator+1, animNameLength);
 
                         anim.fbxfile = opts.fbxfile.substr(0, opts.fbxfile.length() - 4) + "@" + anim.name +".FBX";
@@ -278,6 +279,11 @@ commandLineOptions parseArgs(int numArgs, char *argv[])
                     opts.logfile = argv[i+1];
                 }
             }
+            else if( tmp == "-b" )
+            {
+                // INT_MAX is used to specify to take the bind pose from the FBX.
+                opts.bindframe = INT_MAX;
+            }
         }
     }
     return opts;
@@ -360,7 +366,11 @@ int main(int argc, char *argv[])
         { 
             for( size_t i = 0; i < ops.anims.size(); ++i )
             {
-                FxOgreFBX::FxOgreFBXDLL::AddFBXAnimationToExisting(ops.anims[i].fbxfile.c_str(), pSkeletonInputPath, pMeshInputPath, pLogPath, ops.anims[i].name.c_str(), ops.anims[i].start, ops.anims[i].stop, ops.rate);
+                if( !FxOgreFBX::FxOgreFBXDLL::AddFBXAnimationToExisting(ops.anims[i].fbxfile.c_str(), pSkeletonInputPath, pMeshInputPath, pLogPath, ops.anims[i].name.c_str(), ops.anims[i].start, ops.anims[i].stop, ops.rate))
+                {
+                    cout << "Failed to add FBX animation!\n";
+                    return -1;
+                }
             }
         }
         else

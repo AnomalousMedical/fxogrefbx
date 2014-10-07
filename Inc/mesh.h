@@ -49,9 +49,6 @@ namespace FxOgreFBX
         std::vector<dagInfo> dagMap;
     } sharedGeometry;
 
-    typedef stdext::hash_map<int,int> submeshPoseRemapping;
-
-    typedef stdext::hash_map<int,submeshPoseRemapping> poseRemapping; 
 
     /***** Class Mesh *****/
     class Mesh
@@ -86,9 +83,9 @@ namespace FxOgreFBX
 
         void getKeyedFrames(std::vector<int>& keyedFrames, ParamList& params );
 
-        int getNumSubmeshes(){return m_submeshes.size();}
+        int getNumSubmeshes(){return static_cast<int>(m_submeshes.size());}
 
-        BoundingBox calculateBoundingBox();
+        BoundingBox calculateBoundingBox(ParamList &params);
 
         // Adds the animation from the FBX to the mesh file.
         bool AddFBXAnimationToExisting(OgreManagers& managers, std::string &meshFilePath, std::string &clipName, ParamList& params, float start, float stop);
@@ -173,12 +170,13 @@ namespace FxOgreFBX
         std::vector<int> newuvsets;
         int* pSkinCluster;
         BlendShape* pBlendShape;
+        int m_numBlendShapes;
 
         std::vector<int*> shaders;
         std::vector<faceArray> polygonSets;
         
         bool opposite;
-        poseRemapping m_poseRemapping;
+        BoundingBox m_bindBox;
 
     };
 

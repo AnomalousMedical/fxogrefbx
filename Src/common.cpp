@@ -84,18 +84,38 @@ namespace FxOgreFBX
 
     bool isVisible(FbxNode *pNode)
     {
-        bool bIsVisible = false;
+		// First check if this node is part of a display layer that is invisible.
+		if( pNode && pNode->GetDocument() )
+		{
+			int numLayers = pNode->GetDocument()->GetMemberCount<FbxDisplayLayer>();
+			for( int i = 0; i < numLayers; ++i )
+			{
+				FbxDisplayLayer* pDisplayLayer = pNode->GetDocument()->GetMember<FbxDisplayLayer>(i);
+				FbxObject *pMemberNode = pDisplayLayer->FindMember<FbxNode>(pNode->GetName());
+				if( pMemberNode )
+				{
+					if( !pDisplayLayer->Show )
+					{
+						return false;
+					}
+				}
+			}
+		}
+
+		// Initialize to the Show property.  In Maya, this is set by the Shape object's Visibility checkbox
+		// in the "Object Display" tab. Unlike the main Visibility checkbox in the main Object's "Display"
+		// tab, this property is not inherited by children.
+        bool bIsVisible = pNode->Show.Get();
         FbxNode* pParentNode =  pNode;
-        while( pParentNode != NULL )
+        while( pParentNode != NULL && bIsVisible)
         {
-            bIsVisible = pParentNode->GetVisibility();
-            if( !bIsVisible )
+			bIsVisible = pParentNode->GetVisibility();
+            if( !pParentNode->VisibilityInheritance.Get() )
             {
                 break;
-            }
+			}
             pParentNode = pParentNode->GetParent();
         }
-
         return bIsVisible;
     }
     FbxAMatrix computeLocalTransform(FbxNode *pNode)
@@ -198,12 +218,19 @@ namespace FxOgreFBX
     {
         DWORD attribs = GetFileAttributesA(s.c_str());
         
-        if( INVALID_FILE_ATTRIBUTES == attribs &&
-            ERROR_FILE_NOT_FOUND == GetLastError() )
+        if( INVALID_FILE_ATTRIBUTES == attribs )
+        {
+            if( ERROR_FILE_NOT_FOUND == GetLastError())
+            {
+                // File not found.  Could also be invalid path.
+            }
+            return false;
+        }
+        // Return false if this is a directory, not a file.
+        if( attribs & FILE_ATTRIBUTE_DIRECTORY )
         {
             return false;
         }
-        
         return true;
     }
     // Note: only send in directory paths to this, not full file paths.

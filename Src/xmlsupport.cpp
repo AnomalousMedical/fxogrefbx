@@ -3,7 +3,7 @@
 //
 // Owner: Jamie Redmond
 //
-// Copyright (c) 2002-2012 OC3 Entertainment, Inc.
+// Copyright (c) 2002-2014 OC3 Entertainment, Inc.
 //------------------------------------------------------------------------------
 /*********************************************************************************
 *                                                                                *
@@ -17,9 +17,6 @@
 
 #if FXOGREFBX_USE_TINYXML
 
-#include "tinyxml.cpp"
-#include "tinystr.cpp"
-#include "tinyxmlerror.cpp"
-#include "tinyxmlparser.cpp"
+#include "tinyxml2.cpp"
 
 #endif // FXOGREFBX_USE_TINYXML

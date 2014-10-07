@@ -40,6 +40,8 @@ namespace FxOgreFBX
         m_sharedGeom.dagMap.clear();
         m_vertexClips.clear();
         m_BSClips.clear();
+        m_numBlendShapes = 0;
+        m_bindBox.clear();
     }
 
     // destructor
@@ -86,6 +88,7 @@ namespace FxOgreFBX
         if (m_pSkeleton)
             delete m_pSkeleton;
         m_pSkeleton = NULL;
+        m_numBlendShapes = 0;
     }
 
     // get pointer to linked skeleton
@@ -149,7 +152,6 @@ namespace FxOgreFBX
     }
     bool Mesh::AddFBXAnimationToExisting(OgreManagers& managers, std::string &meshfilepath, std::string &clipName, ParamList& params, float start, float stop)
     {
-        
         for( int iGeom = 0; iGeom < params.pScene->GetGeometryCount(); ++iGeom )
         {
             FbxGeometry *pGeom = params.pScene->GetGeometry(iGeom);
@@ -188,7 +190,7 @@ namespace FxOgreFBX
         loadBlendShapeAnimations(params);
         
         Ogre::MeshPtr pOgreMesh = loadOgreMeshFromFile(managers, meshfilepath);
-
+       
         if( params.fps == 0 )
         {
             FxOgreFBXLog( "Invalid fps rate: 0. Failed to import animation %s.\n", clipName.c_str() );
@@ -199,20 +201,21 @@ namespace FxOgreFBX
             FxOgreFBXLog( "Invalid start and end time for animation %s: (%f, %f).\n", clipName.c_str(), start, stop );
             return false;
         }
-        replaceBSAnimation(pOgreMesh, clipName, start, stop, 1/params.fps, params);
-
-        Ogre::MeshSerializer meshSerializer;
-        try
+        if( replaceBSAnimation(pOgreMesh, clipName, start, stop, 1/params.fps, params) )
         {
-            meshSerializer.exportMesh(pOgreMesh.get(),meshfilepath.c_str());
+            Ogre::MeshSerializer meshSerializer;
+            try
+            {
+                meshSerializer.exportMesh(pOgreMesh.get(),meshfilepath.c_str());
+            }
+            catch( Ogre::Exception& e )
+            {
+                FxOgreFBXLog("Error! %s", e.getFullDescription().c_str());
+                return false;
+            }
+            return true;
         }
-        catch( Ogre::Exception& e )
-        {
-            FxOgreFBXLog("Error! %s", e.getFullDescription().c_str());
-            return false;
-        }
-
-        return true;
+        return false;
     }
 
     bool Mesh::preprocessNode(FbxNode *pNode, FbxMesh *pMesh, FbxScene* pScene)
@@ -423,13 +426,13 @@ namespace FxOgreFBX
     // Load blend shape deformers
     bool Mesh::loadBlendShapes(ParamList &params)
     {
-        size_t i;
+        int i;
         FxOgreFBXLog( "Loading blend shape poses...\n");
         
         // Get the blend shape poses
         if (params.useSharedGeom)
         {
-            for  (i=0; i<m_sharedGeom.dagMap.size(); i++)
+            for  (i=0; i<static_cast<int>(m_sharedGeom.dagMap.size()); i++)
             {
                 dagInfo di = m_sharedGeom.dagMap[i];
                 if (di.pBlendShape)
@@ -438,12 +441,12 @@ namespace FxOgreFBX
         }
         else
         {
-            for (i=0; i<m_submeshes.size(); i++)
+            for (i=0; i<static_cast<int>(m_submeshes.size()); i++)
             {
                 Submesh* pSubmesh = m_submeshes[i];
                 if (pSubmesh->m_pBlendShape)
                     pSubmesh->m_pBlendShape->loadPoses(params,pSubmesh->m_vertices,
-                        pSubmesh->m_vertices.size(),0,i+1);
+                        static_cast<long>(pSubmesh->m_vertices.size()),0,i+1);
             }
         }
         return true;
@@ -460,7 +463,7 @@ namespace FxOgreFBX
                     di.pBlendShape->getKeyedFrames(keyedFrames);
             }
         }
-        else
+        else if( pBlendShape )
         {
             pBlendShape->getKeyedFrames(keyedFrames);
         }
@@ -469,7 +472,7 @@ namespace FxOgreFBX
     bool Mesh::loadBSClipAnim(std::string clipName,float start,float stop,float rate,ParamList& params, Animation& a)
     {
         int startPoseId = 0;
-        size_t j,k = 0;
+        int j,k = 0;
         a.m_name = clipName;
         a.m_length = stop - start;
         a.m_tracks.clear();
@@ -479,14 +482,14 @@ namespace FxOgreFBX
         {
             // Create a track for each blend shape
             std::vector<Track> tracks;
-            for  (j=0; j<m_sharedGeom.dagMap.size(); j++)
+            for  (j=0; j<static_cast<int>(m_sharedGeom.dagMap.size()); j++)
             {
                 dagInfo di = m_sharedGeom.dagMap[j];
                 if (di.pBlendShape)
                 {
                     Track t = di.pBlendShape->loadTrack(start,stop,rate,params,0,startPoseId);
                     tracks.push_back(t);
-                    startPoseId += di.pBlendShape->getPoseGroups().find(0)->second.poses.size();
+                    startPoseId += static_cast<int>(di.pBlendShape->getPoseGroups().find(0)->second.poses.size());
                 }
             }
             // Merge the tracks into a single track (shared geometry must have a single animation track)
@@ -494,13 +497,13 @@ namespace FxOgreFBX
             {
                 Track newTrack;
                 // Merge keyframes at the same time position from all tracks
-                for (j=0; j<tracks[0].m_vertexKeyframes.size(); j++)
+                for (j=0; j<static_cast<int>(tracks[0].m_vertexKeyframes.size()); j++)
                 {
                     // Create a new keyframe
                     vertexKeyframe newKeyframe;
                     newKeyframe.time = tracks[0].m_vertexKeyframes[j].time;
                     // Get keyframe at current position from all tracks
-                    for (k=0; k<tracks.size(); k++)
+                    for (k=0; k<static_cast<int>(tracks.size()); k++)
                     {
                         vertexKeyframe* pSrcKeyframe = &tracks[k].m_vertexKeyframes[j];
                         size_t pri;
@@ -528,14 +531,14 @@ namespace FxOgreFBX
         {
             // Create a track for each submesh
             std::vector<Track> tracks;
-            for (j=0; j<m_submeshes.size(); j++)
+            for (j=0; j<static_cast<int>(m_submeshes.size()); j++)
             {
                 Submesh* pSubmesh = m_submeshes[j];
                 if (pSubmesh->m_pBlendShape)
                 {
-                    int startPoseId = 0;
                     Track t = pSubmesh->m_pBlendShape->loadTrack(start,stop,rate,params,j+1,startPoseId);
                     a.addTrack(t);
+                    startPoseId += static_cast<int>(pSubmesh->m_pBlendShape->getPoseGroups().find(j+1)->second.poses.size());
                 }
             }
         }
@@ -591,8 +594,11 @@ namespace FxOgreFBX
         {
            pMesh.get()->removeAnimation(clipName.c_str());
         }
-        createOgrePoseAnimation(pMesh, a, params);
-        return true;
+        if( createOgrePoseAnimation(pMesh, a, params) )
+        {
+            return true;
+        }
+        return false;
     }
 
 //--------------------------------------------------------------------------------
@@ -617,13 +623,14 @@ namespace FxOgreFBX
                     break;
                 default:
                     {
-                        FxOgreFBXLog( "Unsupported UV\n");
+                        FxOgreFBXLog( "ERRORBOXWARNING: Unsupported UV format for mesh %s.\n", pNode->GetName());
+                        FxOgreFBXLog( "Warning: Unsupported UV format for mesh %s.  Make sure UVs are per-vertex to get textures to display properly.\n", pNode->GetName());
                         assert(false);
                     }
                     break;
                 }
             }
-            for( int i = m_uvsets.size(); i <  pMesh->GetElementUVCount(); ++i)
+            for( int i = static_cast<int>(m_uvsets.size()); i <  pMesh->GetElementUVCount(); ++i)
             {
                 uvset uv;
                 uv.size = 2;
@@ -689,7 +696,7 @@ namespace FxOgreFBX
                 newvertices.resize(numVertices);
                 newweights.resize(numVertices);
                 newjointIds.resize(numVertices);
-                FxOgreFBXLog( "Num verticies: %i\n", numVertices);
+                FxOgreFBXLog( "Num vertices: %i\n", numVertices);
                 for (int i=0; i<numVertices; i++)
                 {
                     newvertices[i].pointIdx = -1;
@@ -737,7 +744,7 @@ namespace FxOgreFBX
                 {
                     FxOgreFBXLog( "Warning!  Recomputing normals with FbxMesh::ComputeVertexNormals.  This may cause artifacts on some graphics cards.\n");
                     pMesh->InitNormals();
-                    pMesh->ComputeVertexNormals();
+                    pMesh->GenerateNormals();
                 }
                 FbxVector4 pNormal;
                 for( int iFCount = 0; iFCount < numfaces; ++iFCount)
@@ -793,7 +800,7 @@ namespace FxOgreFBX
     // Get faces data
     bool Mesh::getFaces(FbxNode *pNode, FbxMesh *pMesh, ParamList &params)
     {
-        size_t i,j,k;
+        int i,j,k;
 
         int numfaces =pMesh->GetPolygonCount();
 
@@ -817,8 +824,8 @@ namespace FxOgreFBX
                     vtxIdx = pMesh->GetPolygonVertex(iFCount, i);
                     nrmIdx++;
 
-                    assert(vtxIdx >= 0 && vtxIdx < (int)newvertices.size());
-                    assert(nrmIdx >= 0 && nrmIdx < (int)newnormals.size());
+                    assert(vtxIdx >= 0 && vtxIdx < static_cast<int>(newvertices.size()));
+                    assert(nrmIdx >= 0 && nrmIdx < static_cast<int>(newnormals.size()));
 
                     FbxColor col = GetFBXColor(pMesh, iFCount, i);
                     Point3 color = Point3(col.mRed,col.mGreen,col.mBlue);
@@ -842,19 +849,19 @@ namespace FxOgreFBX
         
                         // save vbas
                         newvertices[vtxIdx].vba.resize(newweights[vtxIdx].size());
-                        for (j=0; j<newweights[vtxIdx].size(); j++)
+                        for (j=0; j<static_cast<int>(newweights[vtxIdx].size()); j++)
                         {
                             newvertices[vtxIdx].vba[j] = (newweights[vtxIdx])[j];
                         }
                         // save joint ids
                         newvertices[vtxIdx].jointIds.resize(newjointIds[vtxIdx].size());
-                        for (j=0; j<newjointIds[vtxIdx].size(); j++)
+                        for (j=0; j<static_cast<int>(newjointIds[vtxIdx].size()); j++)
                         {
                             newvertices[vtxIdx].jointIds[j] = (newjointIds[vtxIdx])[j];
                         }
 
                         // save uv sets data
-                        for (j=0; j<newuvsets.size(); j++)
+                        for (j=0; j<static_cast<int>(newuvsets.size()); j++)
                         {
                             newvertices[vtxIdx].u[j] = 0;
                             newvertices[vtxIdx].v[j] = 0;
@@ -869,7 +876,7 @@ namespace FxOgreFBX
                             newvertices[vtxIdx].v[j] = static_cast<float>(uv.y);
                         }
                         // save vertex index in face info
-                        newFace.v[i] = m_sharedGeom.vertices.size() + vtxIdx;
+                        newFace.v[i] = static_cast<int>(m_sharedGeom.vertices.size()) + vtxIdx;
                         // update value of index to next vertex info (-1 means nothing next)
                         newvertices[vtxIdx].next = -1;
                     }
@@ -897,7 +904,7 @@ namespace FxOgreFBX
 
                             if (params.exportTexCoord)
                             {
-                                for (j=0; j<newuvsets.size(); j++)
+                                for (j=0; j<static_cast<int>(newuvsets.size()); j++)
                                 {
                                     int lTextureUVIndex = pMesh->GetTextureUVIndex(iFCount, i);
                                     FbxGeometryElementUV* leUV = pMesh->GetElementUV(j);
@@ -930,20 +937,20 @@ namespace FxOgreFBX
                             vtx.a = alpha;
                             // save vertex vba
                             vtx.vba.resize(newweights[vtxIdx].size());
-                            for (j=0; j<newweights[vtxIdx].size(); j++)
+                            for (j=0; j<static_cast<int>(newweights[vtxIdx].size()); j++)
                             {
                                 vtx.vba[j] = (newweights[vtxIdx])[j];
                             }
                             // save joint ids
                             vtx.jointIds.resize(newjointIds[vtxIdx].size());
-                            for (j=0; j<newjointIds[vtxIdx].size(); j++)
+                            for (j=0; j<static_cast<int>(newjointIds[vtxIdx].size()); j++)
                             {
                                 vtx.jointIds[j] = (newjointIds[vtxIdx])[j];
                             }
                             // save vertex texture coordinates
                             vtx.u.resize(newuvsets.size());
                             vtx.v.resize(newuvsets.size());
-                            for (j=0; j<newuvsets.size(); j++)
+                            for (j=0; j<static_cast<int>(newuvsets.size()); j++)
                             {
                                 // Setup default
                                 vtx.u[j] = 0;
@@ -961,12 +968,12 @@ namespace FxOgreFBX
                             vtx.next = -1;
                             newvertices.push_back(vtx);
                             // save vertex index in face info
-                            newFace.v[i] = m_sharedGeom.vertices.size() + newvertices.size()-1;
-                            newvertices[idx].next = newvertices.size()-1;
+                            newFace.v[i] = static_cast<int>(m_sharedGeom.vertices.size()) + static_cast<int>(newvertices.size())-1;
+                            newvertices[idx].next = static_cast<int>(newvertices.size())-1;
                         } 
                         else //	not different
                         {
-                            newFace.v[i] = m_sharedGeom.vertices.size() + idx;
+                            newFace.v[i] = static_cast<int>(m_sharedGeom.vertices.size()) + idx;
                         }
                     }
                 }
@@ -1034,7 +1041,7 @@ namespace FxOgreFBX
         if(defaultJointIndex == -1 )
         {
             // All verts must be weighted to bones in Ogre.
-            // Weight unskinned verticies to the root bone. 
+            // Weight unskinned vertices to the root bone. 
             defaultJointIndex = 0;
             bRigidlySkinToRoot = true;
         }
@@ -1077,7 +1084,7 @@ namespace FxOgreFBX
         // save a new entry in the shared geometry map: we associate the index of the first 
         // vertex we're loading with the dag path from which it has been read
         dagInfo di;
-        di.offset = m_sharedGeom.vertices.size();
+        di.offset = static_cast<long>(m_sharedGeom.vertices.size());
         di.pNode = pNode;
         di.pBlendShape = pBlendShape;
 
@@ -1100,6 +1107,9 @@ namespace FxOgreFBX
             v.x = point[0];
             v.y = point[1];
             v.z = point[2];
+			
+            m_bindBox.merge(Point3(v.x, v.y, v.z));
+
             // save vertex normal
             FbxVector4 normal = newnormals[vInfo.normalIdx];
             if (fabs(normal[0]) < PRECISION)
@@ -1165,7 +1175,7 @@ namespace FxOgreFBX
             }
         }
         // save number of vertices referring to this mesh dag in the dag path map
-        di.numVertices = m_sharedGeom.vertices.size() - di.offset;
+        di.numVertices = static_cast<long>(m_sharedGeom.vertices.size()) - di.offset;
         m_sharedGeom.dagMap.push_back(di);
         FxOgreFBXLog( "done creating vertices list\n");
         
@@ -1299,24 +1309,24 @@ namespace FxOgreFBX
     //load all submesh animation tracks (one for each submesh)
     bool Mesh::loadSubmeshTracks(Animation& a,std::vector<float> &times, FxOgreFBX::ParamList &params)
     {
-        size_t i,j;
+        int i,j;
         bool stat;
         // create a new track for each submesh
         std::vector<Track> tracks;
-        for (i=0; i<m_submeshes.size(); i++)
+        for (i=0; i<static_cast<int>(m_submeshes.size()); i++)
         {
             Track t;
             t.m_type = TT_MORPH;
             t.m_target = T_SUBMESH;
-            t.m_index = i;
+            t.m_index = i+1;
             t.m_vertexKeyframes.clear();
             tracks.push_back(t);
         }
         // get keyframes at given times
-        for (i=0; i<times.size(); i++)
+        for (i=0; i<static_cast<int>(times.size()); i++)
         {
             //load a keyframe for each submesh at current time
-            for (j=0; j<m_submeshes.size(); j++)
+            for (j=0; j<static_cast<int>(m_submeshes.size()); j++)
             {
                 stat = m_submeshes[j]->loadKeyframe(tracks[j],times[i]-times[0],params);
                 if (stat != true)
@@ -1326,7 +1336,7 @@ namespace FxOgreFBX
             }
         }
         // add tracks to given animation
-        for (i=0; i< tracks.size(); i++)
+        for (i=0; i< static_cast<int>(tracks.size()); i++)
             a.addTrack(tracks[i]);
         // track sucessfully loaded
         return true;
@@ -1383,25 +1393,24 @@ namespace FxOgreFBX
         return true;
     }
 
-    BoundingBox Mesh::calculateBoundingBox()
+    BoundingBox Mesh::calculateBoundingBox(ParamList &params)
     {
-
-        BoundingBox bindBox;
-        if( getSkeleton() )
+        if( !params.useSharedGeom )
         {
-            bindBox = getSkeleton()->getBoundingBox();
+            for(size_t i=0; i<m_submeshes.size(); i++)
+            {
+                m_bindBox.merge(m_submeshes[i]->m_bbox.min);
+                m_bindBox.merge(m_submeshes[i]->m_bbox.max);
+            }			
         }
-        for(size_t i=0; i<m_submeshes.size(); i++)
-        {
-            bindBox.merge(m_submeshes[i]->m_bbox.min);
-            bindBox.merge(m_submeshes[i]->m_bbox.max);
-        }
-        return bindBox;
+        return m_bindBox;
     }
+
 //--------------------------------------------------------------------------------
 //  *************************** Export mesh data ********************************* /
 //--------------------------------------------------------------------------------
     // Write to a OGRE binary mesh
+
     bool Mesh::writeOgreBinary(ParamList &params)
     {
         size_t i;
@@ -1438,12 +1447,13 @@ namespace FxOgreFBX
         // Write pose animations
         if (params.exportBSAnims)
         {
-            createOgrePoseAnimations(pMesh,params);
+            if( !createOgrePoseAnimations(pMesh,params) )
+            {
+                return false;
+            }
         }
-    
         // Create a bounding box for the mesh
-        Ogre::AxisAlignedBox bbox = pMesh->getBounds();
-        BoundingBox bindBox = calculateBoundingBox();
+        BoundingBox bindBox = calculateBoundingBox(params);
 
         Ogre::Vector3 min2(static_cast<float>(bindBox.min.x), 
             static_cast<float>(bindBox.min.y), 
@@ -1451,10 +1461,15 @@ namespace FxOgreFBX
         Ogre::Vector3 max2(static_cast<float>(bindBox.max.x), 
             static_cast<float>(bindBox.max.y), 
             static_cast<float>(bindBox.max.z));
-        Ogre::AxisAlignedBox newbbox;
-        newbbox.setExtents(min2,max2);
-        bbox.merge(newbbox);
+        Ogre::AxisAlignedBox bbox(min2,max2);
         
+        FxOgreFBXLog("Setting bounding box for mesh: (%f, %f, %f) (%f, %f, %f)\n", 
+	        bbox.getMinimum().x, 
+	        bbox.getMinimum().y,
+	        bbox.getMinimum().z,
+	        bbox.getMaximum().x,
+	        bbox.getMaximum().y,
+	        bbox.getMaximum().z);
         // Define mesh bounds
         pMesh->_setBounds(bbox,false);
         // Build edges list
@@ -1497,7 +1512,7 @@ namespace FxOgreFBX
     // Create shared geometry data for an Ogre mesh
     bool Mesh::createOgreSharedGeometry(Ogre::MeshPtr pMesh,ParamList& params)
     {
-        size_t i,j;
+        int i,j;
         bool stat;
         pMesh->sharedVertexData = new Ogre::VertexData();
         pMesh->sharedVertexData->vertexCount = m_sharedGeom.vertices.size();
@@ -1521,8 +1536,14 @@ namespace FxOgreFBX
             pDecl->addElement(buf, offset, Ogre::VET_COLOUR, Ogre::VES_DIFFUSE);
             offset += Ogre::VertexElement::getTypeSize(Ogre::VET_COLOUR);
         }
-        // Add texture coordinates
-        for (i=0; i<m_sharedGeom.vertices[0].texcoords.size(); i++)
+        // Add texture coordinates (maximum of 8!)
+        int texCoordsCount = static_cast<int>(m_sharedGeom.vertices[0].texcoords.size());
+        if( texCoordsCount > 8 )
+        {
+			FxOgreFBXLog( "ERRORBOXWARNING: There were too many sets of texture coordinates. Only the first 8 will be exported.\n");
+            texCoordsCount = 8;
+        }
+        for (i=0; i<texCoordsCount; i++)
         {
             Ogre::VertexElementType uvType = Ogre::VertexElement::multiplyTypeCount(Ogre::VET_FLOAT1, 2);
             pDecl->addElement(buf, offset, uvType, Ogre::VES_TEXTURE_COORDINATES, i);
@@ -1538,11 +1559,11 @@ namespace FxOgreFBX
             // Create a new vertex bone assignements list
             Ogre::Mesh::VertexBoneAssignmentList vbas;
             // Scan list of shared geometry vertices
-            for (i=0; i<m_sharedGeom.vertices.size(); i++)
+            for (i=0; i<static_cast<int>(m_sharedGeom.vertices.size()); i++)
             {
                 vertex v = m_sharedGeom.vertices[i];
                 // Add all bone assignements for every vertex to the bone assignements list
-                for (j=0; j<v.vbas.size(); j++)
+                for (j=0; j<static_cast<int>(v.vbas.size()); j++)
                 {
                     Ogre::VertexBoneAssignment vba;
                     vba.vertexIndex = i;
@@ -1638,10 +1659,6 @@ namespace FxOgreFBX
         int poseCounter = 0;
         if (params.useSharedGeom)
         {
-            // Create an entry in the submesh pose remapping table for the shared geometry
-            submeshPoseRemapping new_sbr;
-            m_poseRemapping.insert(std::pair<int,submeshPoseRemapping>(0,new_sbr));
-            submeshPoseRemapping& sbr = m_poseRemapping.find(0)->second;
             // Read poses associated from all blendshapes associated to the shared geometry
             for (size_t i=0; i<m_sharedGeom.dagMap.size(); i++)
             {
@@ -1694,8 +1711,6 @@ namespace FxOgreFBX
                             Ogre::Vector3 offset(p->offsets[k].x,p->offsets[k].y,p->offsets[k].z);
                             pPose->addVertex(p->offsets[k].index,offset);
                         }
-                        // Add a pose remapping for current pose
-                        sbr.insert(std::pair<int,int>(poseCounter,poseCounter));
                         poseCounter++;
                     }
                 }
@@ -1704,20 +1719,16 @@ namespace FxOgreFBX
         else
         {
             // Get poses associated to the submeshes
-            for (size_t i=0; i<m_submeshes.size(); i++)
+            for (int i=0; i<static_cast<int>(m_submeshes.size()); i++)
             {
                 BlendShape* pBS = m_submeshes[i]->m_pBlendShape;
                 // Check if this submesh has a blend shape deformer associated
                 if (pBS)
                 {
-                    // Create an entry in the submesh pose remapping table for this submesh
-                    submeshPoseRemapping new_sbr;
-                    m_poseRemapping.insert(std::pair<int,submeshPoseRemapping>(i+1,new_sbr));
-                    submeshPoseRemapping& sbr = m_poseRemapping.find(i+1)->second;
                     // Get the pose group corresponding to the current submesh
                     poseGroup& pg = pBS->getPoseGroups().find(i+1)->second;
                     // Get all poses from current blend shape deformer and current pose group
-                    for (size_t j=0; j<pg.poses.size(); j++)
+                    for (int j=0; j<static_cast<int>(pg.poses.size()); j++)
                     {
                         // Get the pose
                         pose* p = &(pg.poses[j]);
@@ -1727,21 +1738,19 @@ namespace FxOgreFBX
                             p->name += poseCounter;
                         }
                         // Create a new pose for the ogre mesh
-                        Ogre::Pose* pPose = pMesh->createPose(static_cast<Ogre::ushort>(p->index),p->name.c_str());
+                        Ogre::Pose* pPose = pMesh->createPose(static_cast<Ogre::ushort>(i+1),p->name.c_str());
                         // Set the pose attributes
-                        for (size_t k=0; k<p->offsets.size(); k++)
+                        for (int k=0; k<static_cast<int>(p->offsets.size()); k++)
                         {
                             Ogre::Vector3 offset(p->offsets[k].x,p->offsets[k].y,p->offsets[k].z);
                             pPose->addVertex(p->offsets[k].index,offset);
                         }
-                        // Add a pose remapping for current pose
-                        sbr.insert(std::pair<int,int>(j,poseCounter));
-
                         poseCounter++;
                     }
                 }
             }
         }
+        m_numBlendShapes = poseCounter;
         return true;
     }
     // Create vertex animations for an Ogre mesh
@@ -1762,7 +1771,7 @@ namespace FxOgreFBX
                     pTrack = pAnimation->createVertexTrack(0,pMesh->sharedVertexData,Ogre::VAT_MORPH);
                 else
                 {
-                    pTrack = pAnimation->createVertexTrack(t->m_index+1,pMesh->getSubMesh(t->m_index)->vertexData,
+                    pTrack = pAnimation->createVertexTrack(t->m_index,pMesh->getSubMesh(t->m_index-1)->vertexData,
                         Ogre::VAT_MORPH);
                 }
                 // Create keyframes for current track
@@ -1809,7 +1818,7 @@ namespace FxOgreFBX
                 pTrack = pAnimation->createVertexTrack(0,pMesh->sharedVertexData,Ogre::VAT_POSE);
             else
             {
-                pTrack = pAnimation->createVertexTrack(t->m_index+1,pMesh->getSubMesh(t->m_index)->vertexData,
+                pTrack = pAnimation->createVertexTrack(t->m_index,pMesh->getSubMesh(t->m_index-1)->vertexData,
                     Ogre::VAT_POSE);
             }
             // Create keyframes for current track
@@ -1819,7 +1828,15 @@ namespace FxOgreFBX
                 for (size_t pri=0; pri<t->m_vertexKeyframes[k].poserefs.size(); pri++)
                 {
                     vertexPoseRef* pr = &t->m_vertexKeyframes[k].poserefs[pri];
-                    pKeyframe->addPoseReference(pr->poseIndex,pr->poseWeight);
+                    if( pr->poseIndex < (int)pMesh->getPoseCount() )
+                    {
+                        pKeyframe->addPoseReference(pr->poseIndex,pr->poseWeight);
+                    }
+                    else
+                    {
+                        FxOgreFBXLog("Error! pose index out of bounds!  Make sure the animation and the base ogre file share the same number of morphs (hint: changing a node's visibility can impact if a morph is exported).\n");
+                        return false;
+                    }
                 }
             }
         }
@@ -1828,10 +1845,21 @@ namespace FxOgreFBX
     // Create pose animations for an Ogre mesh
     bool Mesh::createOgrePoseAnimations(Ogre::MeshPtr pMesh,ParamList& params)
     {
-        // Get all loaded blend shape clips
-        for (size_t i=0; i<m_BSClips.size(); i++)
+        if( m_numBlendShapes > 0 )
         {
-            createOgrePoseAnimation(pMesh, m_BSClips[i], params);
+            // Get all loaded blend shape clips
+            for (size_t i=0; i<m_BSClips.size(); i++)
+            {
+                if( !createOgrePoseAnimation(pMesh, m_BSClips[i], params) )
+                {
+                    FxOgreFBXLog("Error!  Failed to create pose animations.\n");
+                    return false;
+                }
+            }
+        }
+        else
+        {
+            FxOgreFBXLog("Skipping creation of pose animations because there are no blendshapes.\n");
         }
         return true;
     }

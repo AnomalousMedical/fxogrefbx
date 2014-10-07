@@ -62,7 +62,7 @@ namespace FxOgreFBX
         // Get the file version number generate by the FBX SDK.
         FbxManager::GetFileFormatVersion(lSDKMajor, lSDKMinor, lSDKRevision);
 
-        FxOgreFBXLog("FBX version number for this FBX SDK is %d.%d.%d\n", lSDKMajor, lSDKMinor, lSDKRevision);
+		FxOgreFBXLog("FBX SDK version number: %d.%d.%d\n", lSDKMajor, lSDKMinor, lSDKRevision);
 
         // Create an importer.
         FbxImporter* lImporter = FbxImporter::Create(pSdkManager,"");
@@ -74,24 +74,36 @@ namespace FxOgreFBX
         if( !lImportStatus )
         {
             FxOgreFBXLog("Call to FbxImporter::Initialize() failed.\n");
-            FxOgreFBXLog("Error returned: %s\n", lImporter->GetLastErrorString());
+			FbxString error = lImporter->GetStatus().GetErrorString();
+            FxOgreFBXLog("Error returned: %s\n", error.Buffer());
             //printf("Call to FbxImporter::Initialize() failed.\n");
             //printf("Error returned: %s\n\n", lImporter->GetLastErrorString());
 
-            if (lImporter->GetLastErrorID() == FbxIO::eFileVersionNotSupportedYet ||
-                lImporter->GetLastErrorID() == FbxIO::eFileVersionNotSupportedAnymore)
-            {
+			if (lImporter->GetStatus().GetCode() == FbxStatus::eInvalidFileVersion)
+			{
+				FxOgreFBXLog("ERRORBOXWARNING: The FBX file format is not supported by this tool.  Check for updates, or save in an older FBX format."); 
                 FxOgreFBXLog("FBX version number for file %s is unsupported: %d.%d.%d\n", pFilename, lFileMajor, lFileMinor, lFileRevision);
-            }
-
+			}
             return false;
         }
-
-        
-
+		
         if (lImporter->IsFBX())
         {
-            FxOgreFBXLog("FBX version number for file %s is %d.%d.%d\n\n", pFilename, lFileMajor, lFileMinor, lFileRevision);
+			FxOgreFBXLog("FBX file version number: %d.%d.%d\n", lFileMajor, lFileMinor, lFileRevision);
+
+			bool fileIsNewer = false;
+			if( lFileMajor > lSDKMajor )
+			{
+				fileIsNewer = true;
+			}
+			else if( lFileMinor > lSDKMinor )
+			{
+				fileIsNewer = true;
+			}
+			if( fileIsNewer )
+			{
+				FxOgreFBXLog("ERRORBOXWARNING: The file version is greater than the FBX SDK version.  Try exporting a %d.%d file for improved results.\n", lSDKMajor, lSDKMinor);
+			}
 
             // From this point, it is possible to access animation stack information without
             // the expense of loading the entire file.

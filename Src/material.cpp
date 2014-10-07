@@ -128,10 +128,6 @@ namespace FxOgreFBX
                 static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), 
                 static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
 
-            lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->DiffuseFactor;
-            lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Diffuse;
-            m_diffuse = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), 1);
-
             lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->EmissiveFactor;
             lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Emissive;
             m_emissive = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), 
@@ -141,8 +137,6 @@ namespace FxOgreFBX
             //Opacity is Transparency factor now
             lFbxDouble =((FbxSurfaceLambert *) pGameMaterial)->TransparencyFactor;
             lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->TransparentColor;
-
-
             // @todo - This code won't mark textures as transparent incorrectly, but some
             // transparent  materials aren't exported as such.  The TransparencyFactor alone
             // is not reliable, and neither are the Max FBX exporters for that matter.
@@ -150,6 +144,25 @@ namespace FxOgreFBX
             {
                 m_isTransparent = true;
             }
+
+            lFbxDouble = ((FbxSurfaceLambert *) pGameMaterial)->DiffuseFactor;
+            lFbxDouble3 =((FbxSurfaceLambert *) pGameMaterial)->Diffuse;
+            float alpha = 1.0f;
+            if( m_isTransparent )
+            {
+                // Evolver files have transparency on the eyes when there is no texture file.
+                // Make sure we set the alpha correctly when no texture is present.
+                FbxProperty sTextureChannels = pGameMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[0]);
+                if( sTextureChannels.IsValid() )
+                {
+                    int texCount = sTextureChannels.GetSrcObjectCount(FbxTexture::ClassId);
+                    if( texCount == 0 )
+                    {
+                        alpha = static_cast<float>(lFbxDouble.Get());
+                    }
+                }
+            }
+            m_diffuse = Point4(static_cast<float>(lFbxDouble3.Get()[0]* lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[1] * lFbxDouble.Get()), static_cast<float>(lFbxDouble3.Get()[2] * lFbxDouble.Get()), alpha);
         }
 
         // support multiple properties?
@@ -179,14 +192,21 @@ namespace FxOgreFBX
 
                         if( !FileExists(filepath.c_str() ) )
                         {
-                            std::string relativePath = StripFilename(params.fbxFilename) + "\\" + filepath;
+                            std::string fbx_filepath = StripFilename(params.fbxFilename);
+                            std::string filename = StripToTopParent(filepath);
+                            std::string relativePath =  fbx_filepath + "\\" + filename;
                             if( FileExists(relativePath.c_str() ) )
                             {
                                 filepath = relativePath;
                             }
                             else
                             {
-                                FxOgreFBXLog("Warning! Could not locate texture %s for material %s.\n.", filepath.c_str(), m_name.c_str());
+                                // Make sure we have a valid texture file (it has a file extension), then tell the user.
+                                if( filename.find('.') != std::string::npos )
+                                {
+                                    FxOgreFBXLog("ERRORBOXWARNING: Could not locate texture %s.  Try placing it in the FBX file's folder.\n.", filename.c_str());
+                                }
+                                FxOgreFBXLog("Warning: Could not locate texture %s for material %s.\n.", filepath.c_str(), m_name.c_str());
                             }
                         }
 

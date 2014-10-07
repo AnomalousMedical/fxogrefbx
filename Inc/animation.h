@@ -75,8 +75,6 @@ double quat_w, quat_x, quat_y, quat_z;
     typedef struct poseTag
     {
         target poseTarget;
-        long index;
-        int blendShapeIndex;
         std::string name;
         std::vector<vertexOffset> offsets;
         FbxShape* pShape;

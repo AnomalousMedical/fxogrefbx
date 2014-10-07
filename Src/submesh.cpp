@@ -52,6 +52,7 @@ namespace FxOgreFBX
         m_faces.clear();
         m_uvsets.clear();
         m_use32bitIndexes = false;
+        m_bbox.clear();
         // Doug Perkowski - Cleaning up BlendShapes in Mesh.cpp.
 //		if (m_pBlendShape)
 //			delete m_pBlendShape;
@@ -160,7 +161,7 @@ namespace FxOgreFBX
                     vertex v;
                     vertexInfo vInfo = vertInfo[faces[i].v[j]];
                     // save vertex coordinates (rescale to desired length unit)
-                    assert(vInfo.pointIdx >= 0 && vInfo.pointIdx < points.size());
+                    assert(vInfo.pointIdx >= 0 && vInfo.pointIdx < static_cast<int>(points.size()));
                     FbxVector4 point = points[vInfo.pointIdx] * params.lum;
                     if (fabs(point[0]) < PRECISION)
                         point[0] = 0;
@@ -171,8 +172,11 @@ namespace FxOgreFBX
                     v.x = point[0];
                     v.y = point[1];
                     v.z = point[2];
+					
+                    m_bbox.merge(Point3(v.x, v.y, v.z));
+
                     // save vertex normal
-                    assert(vInfo.normalIdx >= 0 && vInfo.normalIdx < normals.size());
+                    assert(vInfo.normalIdx >= 0 && vInfo.normalIdx < static_cast<int>(normals.size()));
                     FbxVector4 normal = normals[vInfo.normalIdx];
                     if (fabs(normal[0]) < PRECISION)
                         normal[0] = 0;
@@ -219,9 +223,9 @@ namespace FxOgreFBX
                     // add newly created vertex to vertex list
                     m_vertices.push_back(v);
                     if (opposite)	// reverse order of face vertices to get correct culling
-                        newFace.v[2-j] = m_vertices.size() - 1;
+                        newFace.v[2-j] = static_cast<int>(m_vertices.size()) - 1;
                     else
-                        newFace.v[j] = m_vertices.size() - 1;
+                        newFace.v[j] = static_cast<int>(m_vertices.size()) - 1;
                 }
             }
             m_faces.push_back(newFace);
@@ -231,17 +235,6 @@ namespace FxOgreFBX
             m_use32bitIndexes = true;
         else
             m_use32bitIndexes = false;
-
-        pMesh->ComputeBBox();
-        FbxDouble3 minDouble = pMesh->BBoxMin.Get();
-        FbxDouble3 maxDouble = pMesh->BBoxMax.Get();
-
-        FbxVector4 min = bindPose.MultT( FbxVector4(minDouble[0],minDouble[1],minDouble[2],0));
-        FbxVector4 max = bindPose.MultT( FbxVector4(maxDouble[0],maxDouble[1],maxDouble[2],0));
-
-        m_bbox.merge(Point3(max[0], max[1], max[2]));
-        m_bbox.merge(Point3(min[0], min[1], min[2]));
-        
 
         // add submesh pointer to m_params list
         params.loadedSubmeshes.push_back(this);
@@ -384,11 +377,17 @@ namespace FxOgreFBX
                 pDecl->addElement(buf, offset, Ogre::VET_COLOUR, Ogre::VES_DIFFUSE);
                 offset += Ogre::VertexElement::getTypeSize(Ogre::VET_COLOUR);
             }
-            // Add texture coordinates
-            for (i=0; i<m_vertices[0].texcoords.size(); i++)
+            // Add texture coordinates (maximum of 8!)
+            size_t texCoordsCount = m_vertices[0].texcoords.size();
+            if( texCoordsCount > 8 )
+            {
+				FxOgreFBXLog( "ERRORBOXWARNING: There were too many sets of texture coordinates. Only the first 8 will be exported.\n");
+                texCoordsCount = 8;
+            }
+            for (i=0; i<texCoordsCount; i++)
             {
                 Ogre::VertexElementType uvType = Ogre::VertexElement::multiplyTypeCount(Ogre::VET_FLOAT1, 2);
-                pDecl->addElement(buf, offset, uvType, Ogre::VES_TEXTURE_COORDINATES, i);
+                pDecl->addElement(buf, offset, uvType, Ogre::VES_TEXTURE_COORDINATES, static_cast<unsigned short>(i));
                 offset += Ogre::VertexElement::getTypeSize(uvType);
             }
             Ogre::VertexDeclaration* pOptimalDecl = pDecl->getAutoOrganisedDeclaration(
@@ -408,7 +407,7 @@ namespace FxOgreFBX
                     for (j=0; j<v.vbas.size(); j++)
                     {
                         Ogre::VertexBoneAssignment vba;
-                        vba.vertexIndex = i;
+                        vba.vertexIndex = static_cast<unsigned int>(i);
                         vba.boneIndex = v.vbas[j].jointIdx;
                         vba.weight = v.vbas[j].weight;
                         vbas.insert(Ogre::SubMesh::VertexBoneAssignmentList::value_type(i, vba));

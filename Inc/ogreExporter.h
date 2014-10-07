@@ -43,6 +43,8 @@ namespace FxOgreFBX
 
         bool Initialize(const char* fbxfilename, const char* skeletonfilename,  const char* meshfilename, const char *logfilename, const char *animname);
 
+		bool InitializeLogging( const char *logfilename);
+
         bool translateNode(FbxNode* pNode);
 
         // Adds the default FBX animation to m_params.skelClipList

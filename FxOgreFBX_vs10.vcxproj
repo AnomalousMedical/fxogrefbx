@@ -93,8 +93,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>fbxsdk-2013.1-mdd.lib;Advapi32.lib;Wininet.lib;OgreMain_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x86;.\External\fbx-sdk\lib\vs2010\x86;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x86\debug;.\External\fbx-sdk\lib\vs2010\x86\debug;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -115,8 +115,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>fbxsdk-2013.1-md.lib;Advapi32.lib;Wininet.lib;OgreMain.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x86;.\External\fbx-sdk\lib\vs2010\x86;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x86\release;.\External\fbx-sdk\lib\vs2010\x86\release;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
@@ -148,8 +148,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>fbxsdk-2013.1-mdd.lib;Advapi32.lib;Wininet.lib;OgreMain_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x64;.\External\fbx-sdk\lib\vs2010\x64;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x64\debug;.\External\fbx-sdk\lib\vs2010\x64\debug;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX64</TargetMachine>
@@ -173,8 +173,8 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
     </ClCompile>
     <Link>
-      <AdditionalDependencies>fbxsdk-2013.1-md.lib;Advapi32.lib;Wininet.lib;OgreMain.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x64;.\External\fbx-sdk\lib\vs2010\x64;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x64\release;.\External\fbx-sdk\lib\vs2010\x64\release;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>

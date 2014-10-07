@@ -64,9 +64,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="fbxsdk-2013.1-mdd.lib Advapi32.lib Wininet.lib OgreMain_d.lib"
+				AdditionalDependencies="libfbxsdk-md.lib Advapi32.lib Wininet.lib OgreMain_d.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=".\Inc;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x86&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x86&quot;;.\External\ogre\lib\$(PlatformName)\vs9"
+				AdditionalLibraryDirectories=".\Inc;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x86\debug&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x86\debug&quot;;.\External\ogre\lib\$(PlatformName)\vs9"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="1"
@@ -139,9 +139,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="fbxsdk-2013.1-md.lib Advapi32.lib Wininet.lib OgreMain.lib"
+				AdditionalDependencies="libfbxsdk-md.lib Advapi32.lib Wininet.lib OgreMain.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories=".\Inc;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x86&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x86&quot;;.\External\ogre\lib\$(PlatformName)\vs9"
+				AdditionalLibraryDirectories=".\Inc;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x86\release&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x86\release&quot;;.\External\ogre\lib\$(PlatformName)\vs9"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"
@@ -218,9 +218,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="fbxsdk-2013.1-mdd.lib Advapi32.lib Wininet.lib OgreMain_d.lib"
+				AdditionalDependencies="libfbxsdk-md.lib Advapi32.lib Wininet.lib OgreMain_d.lib"
 				LinkIncremental="2"
-				AdditionalLibraryDirectories=".\Inc;&quot;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9&quot;;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x64&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x64&quot;;&quot;.\External\ogre\lib\$(PlatformName)\vs9&quot;"
+				AdditionalLibraryDirectories=".\Inc;&quot;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9&quot;;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x64\debug&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x64\debug&quot;;&quot;.\External\ogre\lib\$(PlatformName)\vs9&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				TargetMachine="17"
@@ -294,9 +294,9 @@
 			/>
 			<Tool
 				Name="VCLinkerTool"
-				AdditionalDependencies="fbxsdk-2013.1-md.lib Advapi32.lib Wininet.lib OgreMain.lib"
+				AdditionalDependencies="libfbxsdk-md.lib Advapi32.lib Wininet.lib OgreMain.lib"
 				LinkIncremental="1"
-				AdditionalLibraryDirectories=".\Inc;&quot;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9&quot;;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x64&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x64&quot;;&quot;.\External\ogre\lib\$(PlatformName)\vs9&quot;"
+				AdditionalLibraryDirectories=".\Inc;&quot;..\..\Studio\External\ogre\lib\$(PlatformName)\vs9&quot;;&quot;..\..\Studio\External\fbx-sdk\lib\vs2008\x64\release&quot;;&quot;.\External\fbx-sdk\lib\vs2008\x64\release&quot;;&quot;.\External\ogre\lib\$(PlatformName)\vs9&quot;"
 				GenerateDebugInformation="true"
 				SubSystem="2"
 				OptimizeReferences="2"

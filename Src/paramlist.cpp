@@ -34,8 +34,8 @@ namespace FxOgreFBX
     // Helper function for getting the filename from a full path.
     std::string StripToTopParent(const std::string& filepath)
     {
-        int ri = filepath.find_last_of('\\');
-        int ri2 = filepath.find_last_of('/');
+        int ri = static_cast<int>(filepath.find_last_of('\\'));
+        int ri2 = static_cast<int>(filepath.find_last_of('/'));
         if(ri2 > ri)
         {
             ri = ri2;
@@ -45,8 +45,8 @@ namespace FxOgreFBX
 
     std::string StripFilename(const std::string& filepath)
     {
-        int ri = filepath.find_last_of('\\');
-        int ri2 = filepath.find_last_of('/');
+        int ri = static_cast<int>(filepath.find_last_of('\\'));
+        int ri2 = static_cast<int>(filepath.find_last_of('/'));
         if(ri2 > ri)
         {
             ri = ri2;

@@ -85,8 +85,22 @@
                 max.z = std::max(p.z, max.z);
             }
         }
-        bool bIsFirst;
+        void clear()
+        {
+            bIsFirst = true;
+        }
+        bool isEmpty()
+        {
+            return getBiggestAxis() < PRECISION;
+        }
+        double getBiggestAxis()
+        {
+            double maxAxis = std::max(max.x - min.x, max.y - min.y);
+            return std::max(maxAxis, max.z - min.z);
+        }
         Point3 min,max;
+    private:
+        bool bIsFirst;
     };
 
 

@@ -91,9 +91,7 @@ namespace FxOgreFBX
         //restore skeleton pose
         void restorePose();
         //write to an OGRE binary skeleton
-        bool writeOgreBinary(ParamList &params);
-
-        BoundingBox getBoundingBox();        
+        bool writeOgreBinary(ParamList &params);       
 
         void getKeyedFrames(std::vector<int>& keyedFrames, ParamList& params );
 
@@ -104,6 +102,9 @@ namespace FxOgreFBX
 
         //load a joint. 
         bool loadJoint(FbxNode* pNode, ParamList& params, FbxAMatrix globalBindPose);
+
+		// check if there are duplicate nodes.
+		bool doDuplicateBonesExistRecursive(FbxNode *pNode);
 
         // Attempts to find bind pose info and load joints with the reliable transforms associated with it.
         void loadBindPose(FbxScene *pScene, ParamList& params);
@@ -127,7 +128,6 @@ namespace FxOgreFBX
         // has the last element as the angle;
         FbxVector4 Skeleton::getAngleAxis(FbxQuaternion quat);
 
-        void computeBindPoseBoundingBox();
 
         bool isDefinitelyNotJoint(FbxNode *pNode);
         bool loadClipAnim(std::string clipName,float start,float stop,float rate,ParamList& params,  Animation& a);

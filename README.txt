@@ -40,10 +40,10 @@ For more advanced options, like adding an animation to an existing .skeleton or
 
 Building from Source
 -------------------------------------------------------------------------------
-External code and libraries are not included for Ogre, FBX, or tinyxml
-(http://www.grinninglizard.com/tinyxml/), but you will need to include these in 
+External code and libraries are not included for Ogre, FBX, or tinyxml2 (v2.1.0)
+(https://github.com/leethomason/tinyxml2), but you will need to include these in 
 the project before building.  The External folder is currently empty, but 
-placing the FBX, Ogre, and tinyxml source files in their respective folders
+placing the FBX, Ogre, and tinyxml2 source files in their respective folders
 will let you build without modifying project settings.
 
 
@@ -52,13 +52,10 @@ Things to watch out for
 - Weight all vertices to bones.  The exporter will try to deal with unskinned 
 meshes the best that it can, but to remove uncertainty, do the binding yourself.
 
-- If your character has more than one bind pose, the default behavior is to
-skin the character as it appears on the bindframe (frame 0 by default).  You 
-can also force the exporter to use a bindframe which can be a good for
-troubleshooting.
-
-- Bounding boxes do not account for mesh vertices other than the ones from the mesh
-in the bind position.  The global position of the bones is also used.
+- The default behaviour is to use frame 0 as the bind pose.  You can force a 
+different frame to use, or specify that the FBX bindpose should be used.  If
+the FBX bindpose is used, there must only be one bindpose specified in the 
+FBX file.
 
 - Use the FBX Converter to view FBX files.  Not all scenes from 3D packages export 
 to the FBX format well, so use Autodesk's tool to see if it is a problem with the

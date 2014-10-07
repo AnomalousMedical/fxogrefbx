@@ -135,7 +135,7 @@ namespace FxOgreFBX
                                 break;
                             }
                         }
-                        if( !bAlreadyCopied )
+                        if( !bAlreadyCopied && FileExists(texture) )
                         {
                             copiedTextures.push_back(texture);
                             // Copy file texture to output dir

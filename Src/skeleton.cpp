@@ -53,6 +53,7 @@ namespace FxOgreFBX
         m_animations.clear();
         m_restorePose = "";
         m_jointIndexMap.clear();
+        m_bbox.clear();
     }
     int Skeleton::getJointIndex(FbxNode* pNode)
     {
@@ -207,10 +208,9 @@ namespace FxOgreFBX
             m_joints[i].scaley = static_cast<float>(scale.y);
             m_joints[i].scalez = static_cast<float>(scale.z);
 
-            FxOgreFBXLog( "%s - Local Trans:( %f,%f,%f) Quat( %f,%f,%f,%f), Scale(%f,%f,%f).\n", pNode->GetName(),  translation.x, translation.y, translation.z, localTM.GetQ()[3], localTM.GetQ()[0],localTM.GetQ()[1],localTM.GetQ()[2],scale.x, scale.y, scale.z);
-            
+            FxOgreFBXLog( "%s - Local Trans:( %f,%f,%f) Quat( %f,%f,%f,%f), Scale(%f,%f,%f).\n", pNode->GetName(),  translation.x, translation.y, translation.z, localTM.GetQ()[3], localTM.GetQ()[0],localTM.GetQ()[1],localTM.GetQ()[2],scale.x, scale.y, scale.z);            
         }
-        computeBindPoseBoundingBox();
+
     }
     bool Skeleton::load(FbxScene *pScene,ParamList& params)
     {
@@ -221,6 +221,9 @@ namespace FxOgreFBX
             loadBindPose(pScene, params);
             FxOgreFBXLog( "Finished exporting bind pose.\n");
 
+            FxOgreFBXLog( "Adding parents of high priority bones.\n");
+            addParentsOfExistingJoints(params);
+
             FxOgreFBXLog( "Adding low priority bones.  They won't impact the mesh, but perhaps useful to in-game systems.\n");
             addLowPriorityBones(pScene->GetRootNode(), params);
             FxOgreFBXLog( "Finished adding low priority bones.\n");
@@ -229,11 +232,26 @@ namespace FxOgreFBX
             addParentsOfExistingJoints(params);
             FxOgreFBXLog( "Finished adding parents of existing bones.\n");
 
+
             // Ogre skeletons can only have 256 bones. We sort so parents are added
             // before their children for the most predictable results.
+            if( m_joints.size() > OGRE_MAX_NUM_BONES )
+            {
+                // ERRORBOXWARNING are the most severe warnings prior to a failure state.
+                FxOgreFBXLog( "ERRORBOXWARNING: Ogre supports a maximum of 256 bones. Some were not exported.\n");
+            }
+
             FxOgreFBXLog( "Sorting and pruning joints.\n");
             sortAndPruneJoints();
             FxOgreFBXLog( "Finished sorting and pruning joints.\n");
+
+
+            // Check for duplicates of these high priority bones.
+            if( doDuplicateBonesExistRecursive(pScene->GetRootNode()) )
+			{
+                // ERRORBOXWARNING are the most severe warnings prior to a failure state.
+				FxOgreFBXLog( "ERRORBOXWARNING: Multiple bones with the same name found. Bone names must be unique.\n");
+			}
 
             FxOgreFBXLog( "Calculating local transforms.\n");
             calculateLocalTransforms( pScene->GetRootNode(), params);
@@ -396,18 +414,30 @@ namespace FxOgreFBX
         }
     }
 
-    BoundingBox Skeleton::getBoundingBox()
-    {
-        return m_bbox;
-    }
-    void Skeleton::computeBindPoseBoundingBox()
-    {
-        // Make sure the bind
-        for( size_t i=0; i< m_joints.size(); ++i )
-        {
-            m_bbox.merge(Point3( m_joints[i].globalBindPose.GetT()[0], m_joints[i].globalBindPose.GetT()[1], m_joints[i].globalBindPose.GetT()[2]));
-        }
-    }
+	bool Skeleton::doDuplicateBonesExistRecursive(FbxNode *pNode)
+	{
+		assert(pNode);
+		bool bDuplicateBonesExist = false;
+		int jointIndex = getJointIndex(pNode);
+		if( jointIndex >= 0 && jointIndex < OGRE_MAX_NUM_BONES )
+		{
+			if( m_joints[jointIndex].pNode != pNode )
+			{
+				FxOgreFBXLog( "Warning!  Duplicate bone found: %s.\n", pNode->GetName());
+				// Don't return right away so a warning is printed for all duplicates.
+                bDuplicateBonesExist = true;
+			}
+		}
+		for( int i=0; i< pNode->GetChildCount(); ++i )
+		{
+			if( doDuplicateBonesExistRecursive(pNode->GetChild(i)) )
+			{
+				// Don't return right away so a warning is printed for all duplicates.
+				bDuplicateBonesExist = true;
+			}
+		}
+		return bDuplicateBonesExist;
+	}
 
     void Skeleton::setParentIndexes()
     {
@@ -429,6 +459,7 @@ namespace FxOgreFBX
     // Ensure that parents are before their children in m_joints
     void Skeleton::sortAndPruneJoints()
     {
+
         // Set the indexes to sort by
         setParentIndexes();
 
@@ -466,7 +497,7 @@ namespace FxOgreFBX
             }
             else
             {
-                int id = sorted_joints.size();
+                int id = static_cast<int>(sorted_joints.size());
 
                 sorted_joints.push_back(j);
                 sortedJointIndexMap[j.name] = id;
@@ -518,7 +549,7 @@ namespace FxOgreFBX
 
         joint newJoint;
         m_joints.push_back(newJoint);
-        int index = m_joints.size() - 1;
+        int index = static_cast<int>(m_joints.size()) - 1;
         m_jointIndexMap[pNode->GetName()] = index;
 
         m_joints[index].pNode = pNode;
@@ -889,10 +920,10 @@ namespace FxOgreFBX
     {
         // Get the animstack for getting blendshape curve info.
         FbxAnimLayer* pAnimLayer = NULL;
-        FbxAnimStack* pAnimStack = FbxCast<FbxAnimStack>(params.pScene->GetSrcObject(FBX_TYPE(FbxAnimStack), 0));
+        FbxAnimStack* pAnimStack = params.pScene->GetSrcObject<FbxAnimStack>(0);
         if( pAnimStack)
         {
-            pAnimLayer = pAnimStack->GetMember(FBX_TYPE(FbxAnimLayer), 0);
+            pAnimLayer = (FbxAnimLayer*) pAnimStack->GetMember(FbxCriteria::ObjectType(FbxAnimLayer::ClassId), 0);
         }
 
         std::vector<FbxAnimCurve *> curves;
@@ -901,16 +932,15 @@ namespace FxOgreFBX
             FbxNode *pNode = m_joints[i].pNode;
             if( pNode )
             {
-                
-                curves.push_back( pNode->LclRotation.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, false));
-                curves.push_back( pNode->LclRotation.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, false));
-                curves.push_back( pNode->LclRotation.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, false));
-                curves.push_back( pNode->LclTranslation.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, false));
-                curves.push_back( pNode->LclTranslation.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, false));
-                curves.push_back( pNode->LclTranslation.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, false));
-                curves.push_back( pNode->LclScaling.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, false));
-                curves.push_back( pNode->LclScaling.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, false));
-                curves.push_back( pNode->LclScaling.GetCurve<FbxAnimCurve>(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, false));
+                curves.push_back( pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, false));
+                curves.push_back( pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, false));
+                curves.push_back( pNode->LclRotation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, false));
+                curves.push_back( pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, false));
+                curves.push_back( pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, false));
+                curves.push_back( pNode->LclTranslation.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, false));
+                curves.push_back( pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_X, false));
+                curves.push_back( pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Y, false));
+                curves.push_back( pNode->LclScaling.GetCurve(pAnimLayer, FBXSDK_CURVENODE_COMPONENT_Z, false));
             }
         }
         for( size_t i = 0; i < curves.size(); ++i )
@@ -1007,7 +1037,7 @@ namespace FxOgreFBX
     {
         // Create a new animation
         Ogre::Animation* pAnimation = skeleton.createAnimation(anim.m_name.c_str(),anim.m_length);
-        for (size_t j=0; j<anim.m_tracks.size(); j++)
+        for (int j=0; j<static_cast<int>(anim.m_tracks.size()); j++)
         {
             Track* t = &anim.m_tracks[j];
             // Create a new track
