@@ -105,7 +105,11 @@ namespace FxOgreFBX
 		// Initialize to the Show property.  In Maya, this is set by the Shape object's Visibility checkbox
 		// in the "Object Display" tab. Unlike the main Visibility checkbox in the main Object's "Display"
 		// tab, this property is not inherited by children.
-        bool bIsVisible = pNode->Show.Get();
+        bool bIsVisible = false;
+        if( pNode) 
+        {
+            bIsVisible = pNode->Show.Get();
+        }
         FbxNode* pParentNode =  pNode;
         while( pParentNode != NULL && bIsVisible)
         {

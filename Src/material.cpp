@@ -335,12 +335,12 @@ namespace FxOgreFBX
                 params.outMaterial << "\t\t\t{\n";
                 if( params.prefixTextures )
                 {
-                    params.outMaterial << "\t\t\t\ttexture " << params.matPrefix.c_str() << m_textures[i].filename.c_str() << "\n";
+                    params.outMaterial << "\t\t\t\ttexture \"" << params.matPrefix.c_str() << m_textures[i].filename.c_str() << "\"\n";
                 }
                 else
                 {
                     //write texture name
-                    params.outMaterial << "\t\t\t\ttexture " << m_textures[i].filename.c_str() << "\n";
+                    params.outMaterial << "\t\t\t\ttexture \"" << m_textures[i].filename.c_str() << "\"\n";
                 }
                 //write texture coordinate index
                 params.outMaterial << "\t\t\t\ttex_coord_set " << m_textures[i].uvsetIndex << "\n";
