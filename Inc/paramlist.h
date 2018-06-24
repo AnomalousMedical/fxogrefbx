@@ -81,7 +81,7 @@ namespace FxOgreFBX
     public:
         // class members
         bool exportMesh, exportMaterial, exportAnimCurves, exportCameras, exportAll, exportVBA,
-            exportVertNorm, exportVertCol, exportTexCoord, exportCamerasAnim,
+            exportVertNorm, exportVertBinormal, exportVertTangent, exportVertCol, exportTexCoord, exportCamerasAnim,
             exportSkeleton, exportSkelAnims, exportBSAnims, exportVertAnims, exportBlendShapes, 
             exportWorldCoords, useSharedGeom, lightingOff, copyTextures, exportParticles,
             tangentsSplitMirrored, tangentsSplitRotated, tangentsUseParity, 
@@ -132,6 +132,8 @@ namespace FxOgreFBX
             exportWorldCoords = true;
             exportVBA = true;
             exportVertNorm = true;
+			exportVertBinormal = true;
+			exportVertTangent = true;
             exportVertCol = false;
             exportTexCoord = true;
             exportCamerasAnim = false;
@@ -190,6 +192,8 @@ namespace FxOgreFBX
             exportWorldCoords = source.exportWorldCoords;
             exportVBA = source.exportVBA;
             exportVertNorm = source.exportVertNorm;
+			exportVertBinormal = source.exportVertBinormal;
+			exportVertTangent = source.exportVertTangent;
             exportVertCol = source.exportVertCol;
             exportTexCoord = source.exportTexCoord;
             exportCamerasAnim = source.exportCamerasAnim;

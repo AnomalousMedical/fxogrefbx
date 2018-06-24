@@ -29,6 +29,13 @@
 
 namespace FxOgreFBX
 {
+	//https://www.gamedev.net/articles/programming/graphics/how-to-work-with-fbx-sdk-r3582
+	void ReadNormal(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, FbxVector4& outNormal);
+
+	void ReadBinormal(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, FbxVector4& outNormal);
+
+	void ReadTangent(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, FbxVector4& outNormal);
+
     /***** Class Mesh *****/
     // constructor
     Mesh::Mesh(const std::string& name)
@@ -283,6 +290,8 @@ namespace FxOgreFBX
         newuvsets.clear();
         newpoints.clear();
         newnormals.clear();
+		newbinormals.clear();
+		newtangents.clear();
         
         shaders.clear();
         pSkinCluster = NULL;
@@ -365,6 +374,8 @@ namespace FxOgreFBX
         newjointIds.clear();
         newpoints.clear();
         newnormals.clear();
+		newbinormals.clear();
+		newtangents.clear();
         newuvsets.clear();
         shaders.clear();
         pSkinCluster = NULL;
@@ -734,7 +745,9 @@ namespace FxOgreFBX
 
                 int numfaces =pMesh->GetPolygonCount();
                 newnormals.resize(numfaces*3);
-                int nIdx = 0;
+				newbinormals.resize(numfaces * 3);
+				newtangents.resize(numfaces * 3);
+                int nIdx = 0; //(vertexCounter)
 
                 if( pMesh->CheckIfVertexNormalsCCW() )
                 {
@@ -751,13 +764,33 @@ namespace FxOgreFBX
                 {
                     for (int i=0; i<3; i++)
                     {
-                        pMesh->GetPolygonVertexNormal(iFCount, i, pNormal);
+						//Old
+                        //pMesh->GetPolygonVertexNormal(iFCount, i, pNormal);
+
+						//Normal
+						int controlPointIndex = pMesh->GetPolygonVertex(iFCount, i);
+						ReadNormal(pMesh, controlPointIndex, nIdx, pNormal);
                         // Rotate the normals by the node's rotation.
                         FbxAMatrix mat;
                         mat.SetQ(nodeTransform.GetQ());
                         FbxVector4 norm = mat.MultT(pNormal); 
                         norm.Normalize();
                         newnormals[nIdx] = norm;
+
+						//Binormal
+						ReadBinormal(pMesh, controlPointIndex, nIdx, pNormal);
+						// Rotate the normals by the node's rotation.
+						norm = mat.MultT(pNormal);
+						norm.Normalize();
+						newbinormals[nIdx] = norm;
+
+						//Tangent
+						ReadTangent(pMesh, controlPointIndex, nIdx, pNormal);
+						// Rotate the normals by the node's rotation.
+						norm = mat.MultT(pNormal);
+						norm.Normalize();
+						newtangents[nIdx] = norm;
+
                         nIdx++;
                     }
                 }
@@ -796,6 +829,174 @@ namespace FxOgreFBX
         }
         return true;
     }
+
+	void ReadNormal(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, FbxVector4& outNormal)
+	{
+		if (inMesh->GetElementNormalCount() < 1)
+		{
+			throw std::exception("Invalid Normal Number");
+		}
+		FbxGeometryElementNormal* vertexNormal = inMesh->GetElementNormal(0);
+		switch (vertexNormal->GetMappingMode())
+		{
+		case FbxGeometryElement::eByControlPoint:
+			switch (vertexNormal->GetReferenceMode())
+			{
+			case FbxGeometryElement::eDirect:
+			{
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[2];
+			}
+			break;
+			case FbxGeometryElement::eIndexToDirect:
+			{
+				int index = vertexNormal->GetIndexArray().GetAt(inCtrlPointIndex);
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(index).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(index).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(index).mData[2];
+			}
+			break;
+			default:
+				throw std::exception("Invalid Reference");
+			}
+			break;
+		case FbxGeometryElement::eByPolygonVertex:
+			switch (vertexNormal->GetReferenceMode())
+			{
+			case FbxGeometryElement::eDirect:
+			{
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[2];
+			}
+			break;
+			case FbxGeometryElement::eIndexToDirect:
+			{
+				int index = vertexNormal->GetIndexArray().GetAt(inVertexCounter);
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(index).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(index).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(index).mData[2];
+			}
+			break;
+			default:
+				throw std::exception("Invalid Reference");
+			}
+			break;
+		}
+	}
+
+	void ReadBinormal(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, FbxVector4& outNormal)
+	{
+		if (inMesh->GetElementBinormalCount() < 1)
+		{
+			throw std::exception("Invalid Binormal Number");
+		}
+		FbxGeometryElementBinormal* vertexNormal = inMesh->GetElementBinormal(0);
+		switch (vertexNormal->GetMappingMode())
+		{
+		case FbxGeometryElement::eByControlPoint:
+			switch (vertexNormal->GetReferenceMode())
+			{
+			case FbxGeometryElement::eDirect:
+			{
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[2];
+			}
+			break;
+			case FbxGeometryElement::eIndexToDirect:
+			{
+				int index = vertexNormal->GetIndexArray().GetAt(inCtrlPointIndex);
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(index).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(index).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(index).mData[2];
+			}
+			break;
+			default:
+				throw std::exception("Invalid Reference");
+			}
+			break;
+		case FbxGeometryElement::eByPolygonVertex:
+			switch (vertexNormal->GetReferenceMode())
+			{
+			case FbxGeometryElement::eDirect:
+			{
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[2];
+			}
+			break;
+			case FbxGeometryElement::eIndexToDirect:
+			{
+				int index = vertexNormal->GetIndexArray().GetAt(inVertexCounter);
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(index).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(index).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(index).mData[2];
+			}
+			break;
+			default:
+				throw std::exception("Invalid Reference");
+			}
+			break;
+		}
+	}
+
+	void ReadTangent(FbxMesh* inMesh, int inCtrlPointIndex, int inVertexCounter, FbxVector4& outNormal)
+	{
+		if (inMesh->GetElementTangentCount() < 1)
+		{
+			throw std::exception("Invalid Tangent Number");
+		}
+		FbxGeometryElementTangent* vertexNormal = inMesh->GetElementTangent(0);
+		switch (vertexNormal->GetMappingMode())
+		{
+		case FbxGeometryElement::eByControlPoint:
+			switch (vertexNormal->GetReferenceMode())
+			{
+			case FbxGeometryElement::eDirect:
+			{
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(inCtrlPointIndex).mData[2];
+			}
+			break;
+			case FbxGeometryElement::eIndexToDirect:
+			{
+				int index = vertexNormal->GetIndexArray().GetAt(inCtrlPointIndex);
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(index).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(index).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(index).mData[2];
+			}
+			break;
+			default:
+				throw std::exception("Invalid Reference");
+			}
+			break;
+		case FbxGeometryElement::eByPolygonVertex:
+			switch (vertexNormal->GetReferenceMode())
+			{
+			case FbxGeometryElement::eDirect:
+			{
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(inVertexCounter).mData[2];
+			}
+			break;
+			case FbxGeometryElement::eIndexToDirect:
+			{
+				int index = vertexNormal->GetIndexArray().GetAt(inVertexCounter);
+				outNormal[0] = vertexNormal->GetDirectArray().GetAt(index).mData[0];
+				outNormal[1] = vertexNormal->GetDirectArray().GetAt(index).mData[1];
+				outNormal[2] = vertexNormal->GetDirectArray().GetAt(index).mData[2];
+			}
+			break;
+			default:
+				throw std::exception("Invalid Reference");
+			}
+			break;
+		}
+	}
 
     // Get faces data
     bool Mesh::getFaces(FbxNode *pNode, FbxMesh *pMesh, ParamList &params)
@@ -896,6 +1097,24 @@ namespace FxOgreFBX
                                     different = true;
                                 }
                             }
+							if (params.exportVertBinormal)
+							{
+								FbxVector4 n1 = newbinormals[newvertices[k].normalIdx];
+								FbxVector4 n2 = newbinormals[nrmIdx];
+								if (n1[0] != n2[0] || n1[1] != n2[1] || n1[2] != n2[2])
+								{
+									different = true;
+								}
+							}
+							if (params.exportVertTangent)
+							{
+								FbxVector4 n1 = newtangents[newvertices[k].normalIdx];
+								FbxVector4 n2 = newtangents[nrmIdx];
+								if (n1[0] != n2[0] || n1[1] != n2[1] || n1[2] != n2[2])
+								{
+									different = true;
+								}
+							}
                             if ((params.exportVertCol) &&
                                 (newvertices[k].r!=color.x || newvertices[k].g!=color.y || newvertices[k].b!= color.z || newvertices[k].a!=alpha))
                             {
@@ -1074,6 +1293,30 @@ namespace FxOgreFBX
         }
         return true;
     }
+
+	void FbxVector4ToPoint3(FbxVector4& normal, Point3& n, bool opposite) {
+		if (fabs(normal[0]) < PRECISION)
+			normal[0] = 0;
+		if (fabs(normal[1]) < PRECISION)
+			normal[1] = 0;
+		if (fabs(normal[2]) < PRECISION)
+			normal[2] = 0;
+
+		n.x = normal[0];
+		n.y = normal[1];
+		n.z = normal[2];
+		if (opposite)
+		{
+			// Prevents the normals from facing inwards on the mesh, making it 
+			// completely dark.
+			n.x = -normal[0];
+			n.y = -normal[1];
+			n.z = -normal[2];
+		}
+
+		n.Normalize();
+	}
+
     // Build shared geometry
     bool Mesh::buildSharedGeometry(FbxNode* pNode, ParamList &params)
     {
@@ -1111,27 +1354,10 @@ namespace FxOgreFBX
             m_bindBox.merge(Point3(v.x, v.y, v.z));
 
             // save vertex normal
-            FbxVector4 normal = newnormals[vInfo.normalIdx];
-            if (fabs(normal[0]) < PRECISION)
-                normal[0] = 0;
-            if (fabs(normal[1]) < PRECISION)
-                normal[1] = 0;
-            if (fabs(normal[2]) < PRECISION)
-                normal[2] = 0;
+			FbxVector4ToPoint3(newnormals[vInfo.normalIdx], v.n, opposite);
+			FbxVector4ToPoint3(newbinormals[vInfo.normalIdx], v.bn, opposite);
+			FbxVector4ToPoint3(newtangents[vInfo.normalIdx], v.t, opposite);
 
-            v.n.x = normal[0];
-            v.n.y = normal[1];
-            v.n.z = normal[2];
-            if (opposite)
-            {
-                // Prevents the normals from facing inwards on the mesh, making it 
-                // completely dark.
-                v.n.x = -normal[0];
-                v.n.y = -normal[1];
-                v.n.z = -normal[2];
-            }
-
-            v.n.Normalize();
             // save vertex color
             v.r = vInfo.r;
             v.g = vInfo.g;
@@ -1530,6 +1756,18 @@ namespace FxOgreFBX
             pDecl->addElement(buf, offset, Ogre::VET_FLOAT3, Ogre::VES_NORMAL);
             offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
         }
+		// Add vertex binormal
+		if (params.exportVertBinormal)
+		{
+			pDecl->addElement(buf, offset, Ogre::VET_FLOAT3, Ogre::VES_BINORMAL);
+			offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+		}
+        // Add vertex tangent
+        if (params.exportVertTangent)
+        {
+            pDecl->addElement(buf, offset, Ogre::VET_FLOAT3, Ogre::VES_TANGENT);
+            offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+        }
         // Add vertex colour
         if (params.exportVertCol)
         {
@@ -1629,6 +1867,17 @@ namespace FxOgreFBX
                     *pFloat++ = static_cast<float>(v.n.y);
                     *pFloat++ = static_cast<float>(v.n.z);
                     break;
+				case Ogre::VES_BINORMAL:
+					elem.baseVertexPointerToElement(pBase, &pFloat);
+					*pFloat++ = static_cast<float>(v.bn.x);
+					*pFloat++ = static_cast<float>(v.bn.y);
+					*pFloat++ = static_cast<float>(v.bn.z);
+					break;
+				case Ogre::VES_TANGENT:
+					elem.baseVertexPointerToElement(pBase, &pFloat);
+					*pFloat++ = static_cast<float>(v.t.x);
+					*pFloat++ = static_cast<float>(v.t.y);
+					*pFloat++ = static_cast<float>(v.t.z);
                 case Ogre::VES_DIFFUSE:
                     {
                         elem.baseVertexPointerToElement(pBase, &pRGBA);

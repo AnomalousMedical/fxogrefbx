@@ -33,6 +33,7 @@
 
 namespace FxOgreFBX
 {
+	void FbxVector4ToPoint3(FbxVector4& normal, Point3& n, bool opposite);
 
     /***** structures to store shared geometry *****/
     typedef struct dagInfotag
@@ -167,6 +168,8 @@ namespace FxOgreFBX
         std::vector< std::vector<int> > newjointIds;
         std::vector<FbxVector4> newpoints;
         std::vector<FbxVector4> newnormals;
+		std::vector<FbxVector4> newbinormals;
+		std::vector<FbxVector4> newtangents;
         std::vector<int> newuvsets;
         int* pSkinCluster;
         BlendShape* pBlendShape;

@@ -371,6 +371,18 @@ namespace FxOgreFBX
                 pDecl->addElement(buf, offset, Ogre::VET_FLOAT3, Ogre::VES_NORMAL);
                 offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
             }
+			// Add vertex binormal
+			if (params.exportVertBinormal)
+			{
+				pDecl->addElement(buf, offset, Ogre::VET_FLOAT3, Ogre::VES_BINORMAL);
+				offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+			}
+			// Add vertex tangent
+			if (params.exportVertTangent)
+			{
+				pDecl->addElement(buf, offset, Ogre::VET_FLOAT3, Ogre::VES_TANGENT);
+				offset += Ogre::VertexElement::getTypeSize(Ogre::VET_FLOAT3);
+			}
             // Add vertex colour
             if(params.exportVertCol)
             {
@@ -468,6 +480,18 @@ namespace FxOgreFBX
                     *pFloat++ = static_cast<float>(v.n.y);
                     *pFloat++ = static_cast<float>(v.n.z);
                     break;
+				case Ogre::VES_BINORMAL:
+					elem.baseVertexPointerToElement(pBase, &pFloat);
+					*pFloat++ = static_cast<float>(v.bn.x);
+					*pFloat++ = static_cast<float>(v.bn.y);
+					*pFloat++ = static_cast<float>(v.bn.z);
+					break;
+				case Ogre::VES_TANGENT:
+					elem.baseVertexPointerToElement(pBase, &pFloat);
+					*pFloat++ = static_cast<float>(v.t.x);
+					*pFloat++ = static_cast<float>(v.t.y);
+					*pFloat++ = static_cast<float>(v.t.z);
+					break;
                 case Ogre::VES_DIFFUSE:
                     {
                         elem.baseVertexPointerToElement(pBase, &pRGBA);

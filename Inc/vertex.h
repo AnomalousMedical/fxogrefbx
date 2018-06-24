@@ -109,6 +109,8 @@
     {
         double x, y, z;						//vertex coordinates
         Point3 n;							//vertex normal (Doug Perkowski - 11/16/2007 - modified to replace Maya-specific MVector)
+		Point3 bn;							//vertex binormal
+		Point3 t;							//vertex tangent
         float r,g,b,a;						//vertex colour
         std::vector<texcoord> texcoords;	//vertex texture coordinates
         std::vector<vba> vbas;				//vertex bone assignements
