@@ -121,7 +121,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\OgreMain\lib\;..\..\Studio\External\fbx-sdk\lib\vs2015\x86\release;.\External\fbx-sdk\lib\vs2015\x86\release;.\External\ogre\OgreMain\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\Inc;.\External\fbx-sdk\lib\vs2015\x86\release;.\External\ogre\OgreMain\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
