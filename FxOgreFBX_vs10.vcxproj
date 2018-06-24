@@ -86,7 +86,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\Inc;..\..\Studio\External\ogre\OgreMain\include;..\..\FxSDK\Extras\External\tinyxml;..\..\Studio\External\fbx-sdk\include;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include;.\External\tinyxml;C:\Development\fxogrefbx\External\ogre\OgreMain\include\OGRE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\Inc;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include\OGRE;.\External\tinyxml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FXOGREFBX_EXPORTS; FBXSDK_NEW_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -109,7 +109,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>.\Inc;..\..\Studio\External\ogre\OgreMain\include;..\..\FxSDK\Extras\External\tinyxml;..\..\Studio\External\fbx-sdk\include;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include\OGRE;.\External\tinyxml;C:\Development\fxogrefbx\External\ogre\OgreMain\include\OGRE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\Inc;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include\OGRE;.\External\tinyxml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FXOGREFBX_EXPORTS; FBXSDK_NEW_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>

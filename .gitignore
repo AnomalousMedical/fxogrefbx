@@ -1,0 +1,5 @@
+/.vs
+/External
+/intermediate
+/output
+/**/*.user
