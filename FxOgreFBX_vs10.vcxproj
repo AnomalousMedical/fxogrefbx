@@ -86,7 +86,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\Inc;..\..\Studio\External\ogre\OgreMain\include;..\..\FxSDK\Extras\External\tinyxml;..\..\Studio\External\fbx-sdk\include;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include;.\External\tinyxml;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\Inc;..\..\Studio\External\ogre\OgreMain\include;..\..\FxSDK\Extras\External\tinyxml;..\..\Studio\External\fbx-sdk\include;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include;.\External\tinyxml;C:\Development\fxogrefbx\External\ogre\OgreMain\include\OGRE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FXOGREFBX_EXPORTS; FBXSDK_NEW_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -99,7 +99,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;..\..\Studio\External\ogre\lib\$(Platform)\vs10;..\..\Studio\External\fbx-sdk\lib\vs2010\x86\debug;.\External\fbx-sdk\lib\vs2010\x86\debug;.\External\ogre\lib\$(Platform)\vs10;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\Inc;.\External\fbx-sdk\lib\vs2015\x86\debug;.\External\ogre\OgreMain\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>

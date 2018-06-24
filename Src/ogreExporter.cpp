@@ -13,6 +13,7 @@
 **********************************************************************************/
 #include "Ogre.h"
 #include "OgreDefaultHardwareBufferManager.h"
+#include "OgreLodStrategyManager.h"
 #include "ogreExporter.h"
 #include "FBXSDKCommon.h"
 #include <algorithm>
@@ -873,6 +874,7 @@ namespace FxOgreFBX
         Ogre::SkeletonManager skelMgr;
         Ogre::MaterialManager matMgr;
         Ogre::DefaultHardwareBufferManager hardwareBufMgr;
+		Ogre::LodStrategyManager lodstrategymanager;
 
         // Doug Perkowski  - 03/09/10
         // Creating LodStrategyManager
@@ -891,7 +893,7 @@ namespace FxOgreFBX
                 return false;
             }
             std::cout.flush();
-            stat = m_pMesh->writeOgreBinary(m_params);
+            stat = m_pMesh->writeOgreBinary(m_params, meshMgr);
             if (stat != true)
             {
                 std::cout << "Error writing mesh binary file\n";

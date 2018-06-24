@@ -79,7 +79,7 @@ namespace FxOgreFBX
         //load blend shape animations
         bool loadBlendShapeAnimations(ParamList& params);
         //write to a OGRE binary mesh
-        bool writeOgreBinary(ParamList &params);
+        bool writeOgreBinary(ParamList &params, Ogre::MeshManager& meshManager);
 
         void getKeyedFrames(std::vector<int>& keyedFrames, ParamList& params );
 

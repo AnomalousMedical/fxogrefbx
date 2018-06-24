@@ -1411,12 +1411,12 @@ namespace FxOgreFBX
 //--------------------------------------------------------------------------------
     // Write to a OGRE binary mesh
 
-    bool Mesh::writeOgreBinary(ParamList &params)
+    bool Mesh::writeOgreBinary(ParamList &params, Ogre::MeshManager& meshManager)
     {
         size_t i;
 
         // Construct mesh
-        Ogre::MeshPtr pMesh = Ogre::MeshManager::getSingleton().createManual(m_name.c_str(), 
+        Ogre::MeshPtr pMesh = meshManager.createManual(m_name.c_str(),
             Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
         // Write shared geometry data
         if (params.useSharedGeom)
