@@ -274,9 +274,9 @@ namespace FxOgreFBX
 
         // Iterate through all curves to find the start and end time of the animation. Works
         // for bones and morph targets.
-        for(int i = 0; i < pScene->GetSrcObjectCount(FbxAnimCurve::ClassId); ++i) 
+        for(int i = 0; i < pScene->GetSrcObjectCount(FbxCriteria::ObjectType(FbxAnimCurve::ClassId)); ++i)
         {
-            FbxAnimCurve* pCurve = (FbxAnimCurve*)pScene->GetSrcObject(FbxAnimCurve::ClassId, i);
+            FbxAnimCurve* pCurve = (FbxAnimCurve*)pScene->GetSrcObject(FbxCriteria::ObjectType(FbxAnimCurve::ClassId), i);
             if( pCurve )
             {
                 int numKeys = pCurve->KeyGetCount();
@@ -877,7 +877,7 @@ namespace FxOgreFBX
         // Doug Perkowski  - 03/09/10
         // Creating LodStrategyManager
         // http://www.ogre3d.org/forums/viewtopic.php?f=8&t=55844
-        Ogre::LodStrategyManager lodstrategymanager;   
+        //Ogre::LodStrategyManager lodstrategymanager;   
         
         // Write mesh binary
         if (m_params.exportMesh)

@@ -766,17 +766,18 @@ namespace FxOgreFBX
     // Deletes animation from existing skeleton file.
     bool Skeleton::DeleteAnimationFromExisting(OgreManagers& managers, std::string &skeletonFilePath, std::string &clipName)
     {
-        Ogre::Skeleton skel = Ogre::Skeleton(managers.skelMgr, "fbxexport_skeleton", 0, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        loadOgreSkeletonFromFile(managers, skeletonFilePath, skel);
-        if( skel.hasAnimation(clipName.c_str()) )
+		Ogre::SkeletonPtr skel = managers.skelMgr->create("fbxexport_skeleton", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+		//Ogre::Skeleton(managers.skelMgr, "fbxexport_skeleton", 0, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        loadOgreSkeletonFromFile(managers, skeletonFilePath, *skel);
+        if( skel->hasAnimation(clipName.c_str()) )
         {
-            skel.removeAnimation(clipName.c_str());
+            skel->removeAnimation(clipName.c_str());
             FxOgreFBXLog( "Deleted %s animation from skeleton.\n", clipName.c_str() );
 
             Ogre::SkeletonSerializer skeletonSerializer;
             try
             {
-                skeletonSerializer.exportSkeleton(&skel,skeletonFilePath.c_str());
+                skeletonSerializer.exportSkeleton(skel.getPointer(),skeletonFilePath.c_str());
             }
             catch( Ogre::Exception& e )
             {
@@ -817,13 +818,14 @@ namespace FxOgreFBX
 
     bool Skeleton::AddFBXAnimationToExisting(OgreManagers &managers, std::string &skeletonFilePath, std::string &clipName, ParamList& params, float start, float stop)
     {
-        Ogre::Skeleton skel = Ogre::Skeleton(managers.skelMgr, "fbxexport_skeleton", 0, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
-        loadOgreSkeletonFromFile(managers, skeletonFilePath, skel);
+		Ogre::SkeletonPtr skel = managers.skelMgr->create("fbxexport_skeleton", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        //Ogre::Skeleton skel = Ogre::Skeleton(managers.skelMgr, "fbxexport_skeleton", 0, Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME);
+        loadOgreSkeletonFromFile(managers, skeletonFilePath, *skel);
 
         m_joints.clear();
         m_jointIndexMap.clear();
 
-        Ogre::Skeleton::BoneIterator iterator = skel.getBoneIterator();
+        Ogre::Skeleton::BoneIterator iterator = skel->getBoneIterator();
         int id = 0;
         while( iterator.hasMoreElements() )
         {
@@ -887,12 +889,12 @@ namespace FxOgreFBX
             return false;
         }
 
-        replaceAnimation(skel, clipName, start, stop, 1/params.fps, params);
+        replaceAnimation(*skel, clipName, start, stop, 1/params.fps, params);
 
         Ogre::SkeletonSerializer skeletonSerializer;
         try
         {
-            skeletonSerializer.exportSkeleton(&skel,skeletonFilePath.c_str());
+            skeletonSerializer.exportSkeleton(skel.getPointer(),skeletonFilePath.c_str());
         }
         catch( Ogre::Exception& e )
         {

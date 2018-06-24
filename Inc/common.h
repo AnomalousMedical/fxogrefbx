@@ -23,6 +23,8 @@
 
 #include <vector>
 
+#define _SILENCE_STDEXT_HASH_DEPRECATION_WARNINGS
+
 namespace FxOgreFBX
 {
     class OgreManagers 
@@ -36,7 +38,7 @@ namespace FxOgreFBX
         Ogre::LogManager* logMgr; 
         Ogre::ResourceGroupManager* rgm; 
         Ogre::Math* mth; 
-        Ogre::LodStrategyManager* lodMgr; 
+        //Ogre::LodStrategyManager* lodMgr; 
         Ogre::MaterialManager* matMgr; 
         Ogre::SkeletonManager* skelMgr; 
         Ogre::MeshSerializer* meshSerializer; 

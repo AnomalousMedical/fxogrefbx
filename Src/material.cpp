@@ -155,7 +155,7 @@ namespace FxOgreFBX
                 FbxProperty sTextureChannels = pGameMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[0]);
                 if( sTextureChannels.IsValid() )
                 {
-                    int texCount = sTextureChannels.GetSrcObjectCount(FbxTexture::ClassId);
+                    int texCount = sTextureChannels.GetSrcObjectCount(FbxCriteria::ObjectType(FbxTexture::ClassId));
                     if( texCount == 0 )
                     {
                         alpha = static_cast<float>(lFbxDouble.Get());
@@ -169,14 +169,14 @@ namespace FxOgreFBX
         FbxProperty pProperty = pGameMaterial->FindProperty(FbxLayerElement::sTextureChannelNames[0]);
         if( pProperty.IsValid() )
         {
-            int texCount = pProperty.GetSrcObjectCount(FbxTexture::ClassId);
+            int texCount = pProperty.GetSrcObjectCount(FbxCriteria::ObjectType(FbxTexture::ClassId));
             for (int j = 0; j < texCount; ++j)
             {
 
-                FbxLayeredTexture *lLayeredTexture = FbxCast <FbxLayeredTexture>(pProperty.GetSrcObject(FbxLayeredTexture::ClassId, j));
+                FbxLayeredTexture *lLayeredTexture = FbxCast <FbxLayeredTexture>(pProperty.GetSrcObject(FbxCriteria::ObjectType(FbxLayeredTexture::ClassId), j));
                 assert( lLayeredTexture == NULL);
 
-                FbxTexture* pTexture = FbxCast <FbxTexture> (pProperty.GetSrcObject(FbxTexture::ClassId,j));
+                FbxTexture* pTexture = FbxCast <FbxTexture> (pProperty.GetSrcObject(FbxCriteria::ObjectType(FbxTexture::ClassId),j));
                 if(pTexture)
                 {
                     Texture tex;
