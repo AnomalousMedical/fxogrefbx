@@ -86,7 +86,7 @@
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
       <Optimization>Disabled</Optimization>
-      <AdditionalIncludeDirectories>.\Inc;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include\OGRE;.\External\tinyxml;C:\Program Files\Autodesk\FBX\FBX SDK\2019.0\include;%OGRE_HOME%\include\OGRE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\Inc;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include\OGRE;.\External\tinyxml;C:\Program Files\Autodesk\FBX\FBX SDK\2019.5\include;%OGRE_HOME%\include\OGRE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;_USRDLL;FXOGREFBX_EXPORTS; FBXSDK_NEW_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MinimalRebuild>false</MinimalRebuild>
       <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
@@ -99,7 +99,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain_d.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;.\External\fbx-sdk\lib\vs2015\x86\debug;.\External\ogre\OgreMain\lib\;C:\Program Files\Autodesk\FBX\FBX SDK\2019.0\lib\vs2015\x86\debug;%OGRE_HOME%\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\Inc;.\External\fbx-sdk\lib\vs2015\x86\debug;.\External\ogre\OgreMain\lib\;C:\Program Files\Autodesk\FBX\FBX SDK\2019.5\lib\vs2017\x86\debug;%OGRE_HOME%\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <TargetMachine>MachineX86</TargetMachine>
@@ -109,7 +109,7 @@
     <ClCompile>
       <Optimization>MaxSpeed</Optimization>
       <IntrinsicFunctions>true</IntrinsicFunctions>
-      <AdditionalIncludeDirectories>.\Inc;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include\OGRE;.\External\tinyxml;C:\Program Files\Autodesk\FBX\FBX SDK\2019.0\include;%OGRE_HOME%\include\OGRE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\Inc;.\External\fbx-sdk\include;.\External\ogre\OgreMain\include\OGRE;.\External\tinyxml;C:\Program Files\Autodesk\FBX\FBX SDK\2019.5\include;%OGRE_HOME%\include\OGRE;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PreprocessorDefinitions>WIN32;NDEBUG;_WINDOWS;_USRDLL;FXOGREFBX_EXPORTS; FBXSDK_NEW_API;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
       <FunctionLevelLinking>true</FunctionLevelLinking>
@@ -121,7 +121,7 @@
     </ClCompile>
     <Link>
       <AdditionalDependencies>libfbxsdk-md.lib;Advapi32.lib;Wininet.lib;OgreMain.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>.\Inc;.\External\fbx-sdk\lib\vs2015\x86\release;.\External\ogre\OgreMain\lib\;C:\Program Files\Autodesk\FBX\FBX SDK\2019.0\lib\vs2015\x86\release;%OGRE_HOME%\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>.\Inc;.\External\fbx-sdk\lib\vs2015\x86\release;.\External\ogre\OgreMain\lib\;C:\Program Files\Autodesk\FBX\FBX SDK\2019.5\lib\vs2017\x86\release;%OGRE_HOME%\lib\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <SubSystem>Windows</SubSystem>
       <OptimizeReferences>true</OptimizeReferences>
